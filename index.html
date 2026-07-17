@@ -35,6 +35,11 @@
             font-weight: bold;
         }
         .hidden-tab { display: none; }
+        
+        .subject-row {
+            background-color: var(--tg-theme-secondary-bg-color, #f9fafb);
+            border: 1px dashed var(--tg-theme-hint-color, #d1d5db);
+        }
     </style>
 </head>
 <body class="p-4">
@@ -58,22 +63,24 @@
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('send_task')">ارسال برنامه</button>
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('broadcast')">پیام همگانی</button>
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('advisor_data')">لیست دانش‌آموزان</button>
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('weekly_reports')">گزارشات هفتگی</button>
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('leaderboard')">رتبه‌بندی</button>
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('finance')">تمدید اشتراک</button>
         </div>
 
+        <!-- فرم گزارش کار (مدرن با قابلیت چند درس) -->
         <form id="form_report" class="space-y-4 tab-content">
-            <div id="studyItemsContainer" class="space-y-4">
-                <!-- ردیف‌های مطالعه اینجا توسط جاوااسکریپت اضافه می‌شوند -->
+            <div id="subjectsContainer" class="space-y-4">
+                <!-- ردیف‌های دروس اینجا اضافه می‌شوند -->
             </div>
             
-            <button type="button" onclick="addStudyItem()" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 text-sm font-bold shadow-sm transition-colors hover:bg-blue-100">
+            <button type="button" onclick="addSubjectRow()" class="w-full py-2 border-2 border-dashed border-blue-400 text-blue-500 rounded-lg font-semibold hover:bg-blue-50 transition">
                 ➕ افزودن درس دیگر
             </button>
 
             <div class="space-y-1 mt-4 pt-4 border-t border-gray-200">
-                <label class="block text-sm font-semibold">وضعیت انرژی کل امروز</label>
-                <select id="mood" class="input-field w-full p-2 rounded-lg bg-white">
+                <label class="block text-sm font-semibold">وضعیت انرژی امروز شما</label>
+                <select id="mood" class="input-field w-full p-2 rounded-lg">
                     <option value="عالی">عالی</option>
                     <option value="خوب" selected>خوب</option>
                     <option value="متوسط">متوسط</option>
@@ -85,7 +92,7 @@
         <form id="form_exam" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1">
                 <label class="block text-sm font-semibold">نام آزمون / درس</label>
-                <input type="text" id="courseName" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً ریاضی جامع">
+                <input type="text" id="courseName" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً ریاضی جامع قلمچی">
             </div>
             <div class="space-y-1">
                 <label class="block text-sm font-semibold">درصد یا نمره</label>
@@ -123,6 +130,12 @@
         </form>
 
         <div id="form_advisor_data" class="tab-content hidden-tab text-center text-sm">برای دریافت لیست شناسه‌ها تایید کنید.</div>
+        
+        <div id="form_weekly_reports" class="tab-content hidden-tab text-center text-sm flex flex-col items-center">
+            <span class="text-3xl mb-2">📊</span>
+            <p>با تایید شما، لیست دانش‌آموزان به صورت دکمه‌ای جهت مشاهده گزارش‌ها، در تلگرام ارسال می‌شود.</p>
+        </div>
+
         <div id="form_leaderboard" class="tab-content hidden-tab text-center text-sm">برای مشاهده رتبه‌بندی هفته تایید کنید.</div>
 
         <form id="form_finance" class="space-y-4 tab-content hidden-tab">
@@ -141,6 +154,7 @@
         let currentRole = 'student';
         let currentTab = 'report';
         let studentField = 'تجربی'; // پیش‌فرض
+        let rowCount = 0; // شمارنده ردیف‌های درس
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('role') === 'advisor') currentRole = 'advisor';
@@ -171,6 +185,63 @@
             }
         };
 
+        function addSubjectRow() {
+            rowCount++;
+            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
+            let subjectOptions = '';
+            for (const subj in subjects) {
+                subjectOptions += `<option value="${subj}">${subj}</option>`;
+            }
+
+            const html = `
+                <div id="row_${rowCount}" class="subject-row p-3 rounded-lg relative">
+                    ${rowCount > 1 ? `<button type="button" onclick="removeSubjectRow(${rowCount})" class="absolute top-2 left-2 text-red-500 font-bold">✕</button>` : ''}
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold">درس</label>
+                        <select id="subject_${rowCount}" class="input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(${rowCount})">
+                            ${subjectOptions}
+                        </select>
+                    </div>
+                    <div class="space-y-1 mt-2">
+                        <label class="block text-xs font-semibold">مبحث / فصل</label>
+                        <select id="chapter_${rowCount}" class="input-field w-full p-2 rounded-lg text-sm">
+                            <!-- JS fill -->
+                        </select>
+                    </div>
+                    <div class="flex space-x-2 space-x-reverse mt-2">
+                        <div class="w-1/2 space-y-1">
+                            <label class="block text-xs font-semibold">ساعت</label>
+                            <input type="number" id="hours_${rowCount}" step="0.25" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۱.۵">
+                        </div>
+                        <div class="w-1/2 space-y-1">
+                            <label class="block text-xs font-semibold">تعداد تست</label>
+                            <input type="number" id="tests_${rowCount}" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۴۰">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('subjectsContainer').insertAdjacentHTML('beforeend', html);
+            updateRowChapters(rowCount);
+        }
+
+        function removeSubjectRow(id) {
+            document.getElementById(`row_${id}`).remove();
+        }
+
+        function updateRowChapters(rowId) {
+            const subjectVal = document.getElementById(`subject_${rowId}`).value;
+            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
+            const chapters = subjects[subjectVal] || ["سایر"];
+            
+            const chapterSelect = document.getElementById(`chapter_${rowId}`);
+            chapterSelect.innerHTML = '';
+            
+            chapters.forEach(chap => {
+                chapterSelect.innerHTML += `<option value="${chap}">${chap}</option>`;
+            });
+        }
+
         function initApp() {
             if (currentRole === 'advisor') {
                 document.getElementById('appTitle').innerText = "پنل مدیریت مشاور";
@@ -182,86 +253,9 @@
                 document.getElementById('studentInfo').innerText = `رشته تحصیلی: ${studentField}`;
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
-                
-                document.getElementById('studyItemsContainer').innerHTML = '';
-                studyItemCount = 0;
-                addStudyItem(); // بارگذاری اولین باکس درس
+                addSubjectRow(); // اضافه کردن اولین درس به صورت پیش‌فرض
             }
             switchTab(currentTab);
-        }
-
-        let studyItemCount = 0;
-
-        function addStudyItem() {
-            studyItemCount++;
-            const itemId = studyItemCount;
-            const container = document.getElementById('studyItemsContainer');
-            
-            const div = document.createElement('div');
-            // یک باکس زیبا با بک‌گراند متفاوت برای هر درس
-            div.className = "p-3 rounded-xl border border-gray-200 shadow-sm space-y-3 relative";
-            div.style.backgroundColor = "var(--tg-theme-secondary-bg-color, #f9fafb)";
-            div.id = `study_item_${itemId}`;
-            
-            // نمایش دکمه حذف برای دروس دوم به بعد
-            let removeBtn = '';
-            if (itemId > 1) {
-                removeBtn = `<button type="button" onclick="document.getElementById('study_item_${itemId}').remove()" class="absolute top-2 left-2 text-red-500 text-xs font-bold px-2 py-1 bg-red-50 rounded">حذف ✖</button>`;
-            }
-
-            div.innerHTML = `
-                ${removeBtn}
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold">درس</label>
-                    <select id="subject_${itemId}" class="input-field w-full p-2 rounded-lg" onchange="updateChaptersForId(${itemId})"></select>
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold">مبحث / فصل</label>
-                    <select id="chapter_${itemId}" class="input-field w-full p-2 rounded-lg"></select>
-                </div>
-                <div class="flex space-x-4 space-x-reverse">
-                    <div class="space-y-1 w-1/2">
-                        <label class="block text-sm font-semibold">ساعت مطالعه</label>
-                        <input type="number" id="hours_${itemId}" step="0.25" min="0" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۱.۵">
-                    </div>
-                    <div class="space-y-1 w-1/2">
-                        <label class="block text-sm font-semibold">تعداد تست</label>
-                        <input type="number" id="tests_${itemId}" min="0" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۴۰">
-                    </div>
-                </div>
-            `;
-            container.appendChild(div);
-            loadSubjectsForId(itemId);
-        }
-
-        function loadSubjectsForId(id) {
-            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
-            const subjectSelect = document.getElementById(`subject_${id}`);
-            subjectSelect.innerHTML = '';
-            
-            for (const subj in subjects) {
-                const opt = document.createElement('option');
-                opt.value = subj;
-                opt.innerText = subj;
-                subjectSelect.appendChild(opt);
-            }
-            updateChaptersForId(id);
-        }
-
-        function updateChaptersForId(id) {
-            const subjectSelect = document.getElementById(`subject_${id}`).value;
-            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
-            const chapters = subjects[subjectSelect] || ["سایر"];
-            
-            const chapterSelect = document.getElementById(`chapter_${id}`);
-            chapterSelect.innerHTML = '';
-            
-            chapters.forEach(chap => {
-                const opt = document.createElement('option');
-                opt.value = chap;
-                opt.innerText = chap;
-                chapterSelect.appendChild(opt);
-            });
         }
 
         function switchTab(tabId) {
@@ -292,6 +286,7 @@
                 'send_task': "ارسال برنامه",
                 'broadcast': "ارسال اطلاعیه",
                 'advisor_data': "دریافت لیست",
+                'weekly_reports': "دریافت لیست گزارش‌ها",
                 'leaderboard': "مشاهده نفرات برتر",
                 'finance': "تایید تمدید اشتراک"
             };
@@ -302,29 +297,31 @@
             let payload = { action: currentTab };
 
             if (currentTab === 'report') {
-                const items = document.querySelectorAll('[id^="study_item_"]');
+                const rows = document.querySelectorAll('.subject-row');
                 let details = [];
                 let totalHours = 0;
                 let totalTests = 0;
                 let hasError = false;
 
-                items.forEach(item => {
-                    const id = item.id.split('_')[2];
-                    const subj = document.getElementById(`subject_${id}`).value;
-                    const chap = document.getElementById(`chapter_${id}`).value;
-                    const h = parseFloat(document.getElementById(`hours_${id}`).value) || 0;
-                    const t = parseInt(document.getElementById(`tests_${id}`).value) || 0;
+                rows.forEach(row => {
+                    const rowId = row.id.split('_')[1];
+                    const subj = document.getElementById(`subject_${rowId}`).value;
+                    const chap = document.getElementById(`chapter_${rowId}`).value;
+                    const h = parseFloat(document.getElementById(`hours_${rowId}`).value || 0);
+                    const t = parseInt(document.getElementById(`tests_${rowId}`).value || 0);
 
-                    if (h === 0 && t === 0) {
+                    if (h <= 0 && t <= 0) {
                         hasError = true;
-                    } else {
-                        details.push({ subject: subj, chapter: chap, hours: h, tests: t });
-                        totalHours += h;
-                        totalTests += t;
                     }
+
+                    details.push({ subject: subj, chapter: chap, hours: h, tests: t });
+                    totalHours += h;
+                    totalTests += t;
                 });
 
-                if (hasError || details.length === 0) return tg.showAlert("لطفاً ساعت مطالعه و تست تمام درس‌ها را به درستی وارد کنید.");
+                if (hasError || details.length === 0) {
+                    return tg.showAlert("لطفاً ساعت مطالعه و تعداد تست را برای همه دروس به درستی وارد کنید.");
+                }
 
                 payload.details = details;
                 payload.total_hours = totalHours;
@@ -354,6 +351,7 @@
                 if(!payload.student_id) return tg.showAlert("شناسه وارد نشده است.");
             }
 
+            // ارسال اطلاعات به ربات پایتون
             tg.sendData(JSON.stringify(payload));
         });
 
