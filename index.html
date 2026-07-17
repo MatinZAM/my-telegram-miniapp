@@ -51,13 +51,12 @@
         </div>
 
         <div class="flex overflow-x-auto border-b border-gray-300 mb-6 pb-2 space-x-4 space-x-reverse text-sm" id="tabsContainer">
-            <!-- تب‌های دانش‌آموز -->
+            <!-- تب‌های دانش‌آموز (تب برنامه‌های من ادغام و حذف شد) -->
             <button class="tab-btn active student-only" onclick="switchTab('report')">گزارش‌کار</button>
             <button class="tab-btn student-only" onclick="switchTab('exam')">آزمون</button>
             <button class="tab-btn student-only" onclick="switchTab('message')">پیام به مشاور</button>
-            <button class="tab-btn student-only" onclick="switchTab('student_data')">برنامه‌های من</button>
             <button class="tab-btn student-only" onclick="switchTab('my_stats')">کارنامه کل</button>
-            <button class="tab-btn student-only" onclick="switchTab('sub_status')">وضعیت اشتراک</button>
+            <button class="tab-btn student-only" onclick="switchTab('sub_status')">وضعیت قرارداد</button>
             
             <!-- تب‌های مشاور -->
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('send_task')">ثبت برنامه درسی</button>
@@ -69,10 +68,18 @@
 
         <!-- فرم گزارش کار دانش‌آموز -->
         <form id="form_report" class="space-y-4 tab-content">
+            
+            <!-- بخش چک‌لیست برنامه‌های مشاور -->
+            <div id="todoContainer" class="space-y-2 mb-6 hidden">
+                <h3 class="text-sm font-bold text-blue-700 mb-3 border-b-2 border-blue-100 pb-2">📋 برنامه‌های امروز مشاور (تیک بزنید):</h3>
+                <!-- چک‌باکس‌ها با جاوااسکریپت اینجا ساخته می‌شوند -->
+            </div>
+
             <div id="subjectsContainer" class="space-y-4"></div>
             <button type="button" onclick="addSubjectRow()" class="w-full py-2 border-2 border-dashed border-blue-400 text-blue-500 rounded-lg font-semibold hover:bg-blue-50 transition">
-                ➕ افزودن درس دیگر
+                ➕ افزودن گزارش دستی (خارج از برنامه)
             </button>
+            
             <div class="space-y-1 mt-4 pt-4 border-t border-gray-200">
                 <label class="block text-sm font-semibold">وضعیت انرژی امروز شما</label>
                 <select id="mood" class="input-field w-full p-2 rounded-lg">
@@ -102,11 +109,10 @@
             </div>
         </form>
 
-        <div id="form_student_data" class="tab-content hidden-tab text-center text-sm">برای دریافت برنامه‌های امروز تایید کنید.</div>
         <div id="form_my_stats" class="tab-content hidden-tab text-center text-sm">برای دریافت کارنامه آماری تایید کنید.</div>
         <div id="form_sub_status" class="tab-content hidden-tab text-center text-sm">برای بررسی وضعیت قرارداد تایید کنید.</div>
 
-        <!-- فرم جدید ارسال برنامه برای مشاور (مشابه گزارش‌کار اما برای ثبت تسک) -->
+        <!-- فرم ثبت برنامه توسط مشاور -->
         <form id="form_send_task" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1 mb-4">
                 <label class="block text-sm font-semibold">انتخاب دانش‌آموز</label>
@@ -138,7 +144,7 @@
 
         <div id="form_weekly_reports" class="tab-content hidden-tab text-center text-sm flex flex-col items-center">
             <span class="text-3xl mb-2">👥</span>
-            <p>با تایید شما، لیست دانش‌آموزان شما در چت تلگرام باز می‌شود. با کلیک روی نام هر شخص، گزارشات اخیر او نمایش داده می‌شود.</p>
+            <p>با تایید شما، لیست دانش‌آموزان شما در چت تلگرام باز می‌شود. با کلیک روی نام هر شخص، می‌توانید گزارشات اخیر او را بررسی کنید.</p>
         </div>
 
         <div id="form_leaderboard" class="tab-content hidden-tab text-center text-sm">برای مشاهده رتبه‌بندی هفته تایید کنید.</div>
@@ -159,18 +165,16 @@
         let currentRole = 'student';
         let currentTab = 'report';
         let studentField = 'تجربی'; 
-        let rowCount = 0; // شمارنده برای دانش‌آموز
+        let rowCount = 0; 
         
-        // متغیرهای مربوط به مشاور
         let advisorStudents = [];
         let advisorStudentField = 'تجربی';
-        let advRowCount = 0; // شمارنده برای برنامه‌ریزی مشاور
+        let advRowCount = 0; 
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('role') === 'advisor') currentRole = 'advisor';
         if (urlParams.get('field')) studentField = decodeURIComponent(urlParams.get('field'));
         
-        // دریافت لیست دانش‌آموزان مشاور از لینک
         if (urlParams.get('st_data')) {
             const stDataStr = decodeURIComponent(urlParams.get('st_data'));
             if(stDataStr) {
@@ -207,7 +211,6 @@
             }
         };
 
-        // --- توابع مربوط به فرم دانش‌آموز ---
         function addSubjectRow() {
             rowCount++;
             const subjects = curriculumData[studentField] || curriculumData["تجربی"];
@@ -215,10 +218,10 @@
             for (const subj in subjects) { subjectOptions += `<option value="${subj}">${subj}</option>`; }
 
             const html = `
-                <div id="row_${rowCount}" class="subject-row p-3 rounded-lg relative">
-                    ${rowCount > 1 ? `<button type="button" onclick="removeSubjectRow(${rowCount})" class="absolute top-2 left-2 text-red-500 font-bold">✕</button>` : ''}
+                <div id="row_${rowCount}" class="subject-row p-3 rounded-lg relative border border-gray-200">
+                    <button type="button" onclick="removeSubjectRow(${rowCount})" class="absolute top-2 left-2 text-red-500 font-bold bg-red-100 rounded-full w-6 h-6 flex items-center justify-center">✕</button>
                     <div class="space-y-1">
-                        <label class="block text-xs font-semibold">درس</label>
+                        <label class="block text-xs font-semibold">درس (دستی)</label>
                         <select id="subject_${rowCount}" class="input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(${rowCount})">${subjectOptions}</select>
                     </div>
                     <div class="space-y-1 mt-2">
@@ -251,14 +254,13 @@
             chapters.forEach(chap => { chapterSelect.innerHTML += `<option value="${chap}">${chap}</option>`; });
         }
 
-        // --- توابع مربوط به فرم جدید برنامه‌ریزی مشاور ---
         function onAdvisorStudentChange() {
             const select = document.getElementById('advisorStudentSelect');
             if(select.options.length > 0 && select.value) {
                 advisorStudentField = select.options[select.selectedIndex].getAttribute('data-field') || 'تجربی';
-                document.getElementById('advisorSubjectsContainer').innerHTML = ''; // پاک کردن فرم قبلی
+                document.getElementById('advisorSubjectsContainer').innerHTML = ''; 
                 advRowCount = 0;
-                addAdvisorSubjectRow(); // ایجاد یک ردیف جدید بر اساس رشته شخص انتخاب شده
+                addAdvisorSubjectRow(); 
             }
         }
 
@@ -270,7 +272,7 @@
 
             const html = `
                 <div id="adv_row_${advRowCount}" class="subject-row p-3 rounded-lg relative bg-green-50 border-green-200">
-                    ${advRowCount > 1 ? `<button type="button" onclick="removeAdvisorSubjectRow(${advRowCount})" class="absolute top-2 left-2 text-red-500 font-bold">✕</button>` : ''}
+                    ${advRowCount > 1 ? `<button type="button" onclick="removeAdvisorSubjectRow(${advRowCount})" class="absolute top-2 left-2 text-red-500 font-bold bg-red-100 rounded-full w-6 h-6 flex items-center justify-center">✕</button>` : ''}
                     <div class="space-y-1">
                         <label class="block text-xs font-semibold">چه درسی بخواند؟</label>
                         <select id="adv_subject_${advRowCount}" class="input-field w-full p-2 rounded-lg text-sm" onchange="updateAdvisorRowChapters(${advRowCount})">${subjectOptions}</select>
@@ -305,7 +307,6 @@
             chapters.forEach(chap => { chapterSelect.innerHTML += `<option value="${chap}">${chap}</option>`; });
         }
 
-        // --- مدیریت کلی پنل ---
         function initApp() {
             if (currentRole === 'advisor') {
                 document.getElementById('appTitle').innerText = "پنل مدیریت مشاور";
@@ -313,13 +314,12 @@
                 document.querySelectorAll('.student-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.remove('hidden-tab'));
                 
-                // پر کردن لیست دانش‌آموزان
                 const advisorSelect = document.getElementById('advisorStudentSelect');
                 if (advisorStudents.length > 0) {
                     advisorStudents.forEach(st => {
                         advisorSelect.innerHTML += `<option value="${st.id}" data-field="${st.field}">${st.name} (${st.field})</option>`;
                     });
-                    onAdvisorStudentChange(); // مقداردهی اولیه فرم بر اساس اولین دانش‌آموز
+                    onAdvisorStudentChange(); 
                 } else {
                     advisorSelect.innerHTML = `<option value="">دانش‌آموزی یافت نشد</option>`;
                 }
@@ -329,7 +329,36 @@
                 document.getElementById('studentInfo').innerText = `رشته تحصیلی: ${studentField}`;
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
-                addSubjectRow(); 
+                
+                // لود کردن To-Do لیست مشاور
+                const todosParam = urlParams.get('todos');
+                if (todosParam) {
+                    const tasks = decodeURIComponent(todosParam).split(',');
+                    const container = document.getElementById('todoContainer');
+                    let hasValidTasks = false;
+                    tasks.forEach(task => {
+                        if(!task) return;
+                        const [id, data, status] = task.split('~'); // status 1 = checked
+                        if(!data) return;
+                        const parts = data.split('|');
+                        if(parts.length === 4) { // فرمت جدید
+                            hasValidTasks = true;
+                            const [subj, chap, hrs, tests] = parts;
+                            const isChecked = status === '1' ? 'checked' : '';
+                            const html = `
+                                <label class="flex items-center p-3 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition shadow-sm">
+                                    <input type="checkbox" class="task-checkbox w-5 h-5 text-blue-600 rounded mr-3 focus:ring-blue-500" value="${id}" data-subj="${subj}" data-chap="${chap}" data-hrs="${hrs}" data-tests="${tests}" ${isChecked}>
+                                    <div class="mr-3 text-sm flex-1">
+                                        <div class="font-bold text-gray-800">${subj} <span class="font-normal text-xs text-gray-500">(${chap})</span></div>
+                                        <div class="text-xs font-semibold text-blue-600 mt-1">⏱ ${hrs} ساعت | 📝 ${tests} تست</div>
+                                    </div>
+                                </label>
+                            `;
+                            container.insertAdjacentHTML('beforeend', html);
+                        }
+                    });
+                    if(hasValidTasks) container.classList.remove('hidden');
+                }
             }
             switchTab(currentTab);
         }
@@ -356,7 +385,6 @@
                 'report': "ارسال گزارش مطالعه",
                 'exam': "ثبت نتیجه آزمون",
                 'message': "ارسال پیام",
-                'student_data': "دریافت برنامه‌ها",
                 'my_stats': "مشاهده آمار",
                 'sub_status': "استعلام وضعیت قرارداد",
                 'send_task': "ثبت و ارسال برنامه",
@@ -372,8 +400,31 @@
             let payload = { action: currentTab };
 
             if (currentTab === 'report') {
+                let details = [];
+                let totalHours = 0;
+                let totalTests = 0;
+                let taskUpdates = [];
+                let hasError = false;
+
+                // 1. بررسی چک‌باکس‌های برنامه (تیک خورده‌ها و نخورده‌ها برای آپدیت وضعیت)
+                document.querySelectorAll('.task-checkbox').forEach(cb => {
+                    const isDone = cb.checked;
+                    taskUpdates.push({ id: parseInt(cb.value), done: isDone });
+                    
+                    if (isDone) {
+                        const h = parseFloat(cb.getAttribute('data-hrs') || 0);
+                        const t = parseInt(cb.getAttribute('data-tests') || 0);
+                        details.push({
+                            subject: cb.getAttribute('data-subj') + " (طبق برنامه)",
+                            chapter: cb.getAttribute('data-chap'),
+                            hours: h, tests: t
+                        });
+                        totalHours += h; totalTests += t;
+                    }
+                });
+
+                // 2. بررسی فرم‌های دستی
                 const rows = document.querySelectorAll('#form_report .subject-row');
-                let details = [], totalHours = 0, totalTests = 0, hasError = false;
                 rows.forEach(row => {
                     const rowId = row.id.split('_')[1];
                     const h = parseFloat(document.getElementById(`hours_${rowId}`).value || 0);
@@ -386,11 +437,15 @@
                     });
                     totalHours += h; totalTests += t;
                 });
-                if (hasError || details.length === 0) return tg.showAlert("لطفاً ساعت و تست همه دروس را وارد کنید.");
+
+                if (hasError) return tg.showAlert("لطفاً ساعت و تست فرم‌های دستی را وارد کنید.");
+                if (details.length === 0) return tg.showAlert("هیچ درسی ثبت نشده است! (یا تیک برنامه‌ها را بزنید یا دستی وارد کنید)");
+
                 payload.details = details;
                 payload.total_hours = totalHours;
                 payload.total_tests = totalTests;
                 payload.mood = document.getElementById('mood').value;
+                payload.task_updates = taskUpdates; // برای آپدیت وضعیت در دیتابیس
             } 
             else if (currentTab === 'send_task') {
                 const targetStudent = document.getElementById('advisorStudentSelect').value;
