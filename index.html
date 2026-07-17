@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>پنل کاربری دستیار مشاور</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: var(--tg-theme-bg-color, #f3f4f6);
+            color: var(--tg-theme-text-color, #1f2937);
+            padding-bottom: 80px;
+        }
+        .input-field {
+            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            border: 1px solid var(--tg-theme-hint-color, #d1d5db);
+        }
+        .input-field:focus {
+            border-color: var(--tg-theme-button-color, #3b82f6);
+            outline: none;
+        }
+        .tab-btn {
+            white-space: nowrap;
+            padding: 0.5rem 1rem;
+            color: var(--tg-theme-hint-color, #6b7280);
+        }
+        .tab-btn.active {
+            border-bottom: 2px solid var(--tg-theme-button-color, #3b82f6);
+            color: var(--tg-theme-button-color, #3b82f6);
+            font-weight: bold;
+        }
+        .hidden-tab { display: none; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="max-w-md mx-auto">
+        <div class="text-center mb-6">
+            <h1 class="text-xl font-bold" id="appTitle">در حال بارگذاری...</h1>
+            <p class="text-sm opacity-70 mt-1" id="studentInfo"></p>
+        </div>
+
+        <div class="flex overflow-x-auto border-b border-gray-300 mb-6 pb-2 space-x-4 space-x-reverse text-sm" id="tabsContainer">
+            <!-- تب‌های دانش‌آموز -->
+            <button class="tab-btn active student-only" onclick="switchTab('report')">گزارش‌کار</button>
+            <button class="tab-btn student-only" onclick="switchTab('exam')">آزمون</button>
+            <button class="tab-btn student-only" onclick="switchTab('message')">پیام به مشاور</button>
+            <button class="tab-btn student-only" onclick="switchTab('student_data')">برنامه‌های من</button>
+            <button class="tab-btn student-only" onclick="switchTab('my_stats')">کارنامه کل</button>
+            <button class="tab-btn student-only" onclick="switchTab('sub_status')">وضعیت اشتراک</button>
+            
+            <!-- تب‌های مشاور -->
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('send_task')">ارسال برنامه</button>
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('broadcast')">پیام همگانی</button>
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('advisor_data')">لیست دانش‌آموزان</button>
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('leaderboard')">رتبه‌بندی</button>
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('finance')">تمدید اشتراک</button>
+        </div>
+
+        <!-- فرم گزارش کار (پیشرفته و پویا) -->
+        <form id="form_report" class="space-y-4 tab-content">
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">درس</label>
+                <select id="subjectSelect" class="input-field w-full p-2 rounded-lg" onchange="updateChapters()">
+                    <!-- گزینه‌ها توسط جاوااسکریپت پر می‌شوند -->
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">مبحث / فصل</label>
+                <select id="chapterSelect" class="input-field w-full p-2 rounded-lg">
+                    <!-- گزینه‌ها توسط جاوااسکریپت پر می‌شوند -->
+                </select>
+            </div>
+            <div class="flex space-x-4 space-x-reverse">
+                <div class="space-y-1 w-1/2">
+                    <label class="block text-sm font-semibold">ساعت مطالعه</label>
+                    <input type="number" id="studyHours" step="0.25" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۱.۵">
+                </div>
+                <div class="space-y-1 w-1/2">
+                    <label class="block text-sm font-semibold">تعداد تست</label>
+                    <input type="number" id="testCount" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۴۰">
+                </div>
+            </div>
+            <div class="space-y-1 mt-2">
+                <label class="block text-sm font-semibold">وضعیت انرژی</label>
+                <select id="mood" class="input-field w-full p-2 rounded-lg">
+                    <option value="عالی">عالی</option>
+                    <option value="خوب" selected>خوب</option>
+                    <option value="متوسط">متوسط</option>
+                    <option value="خسته">خسته</option>
+                </select>
+            </div>
+        </form>
+
+        <!-- سایر فرم‌ها بدون استیکر -->
+        <form id="form_exam" class="space-y-4 tab-content hidden-tab">
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">نام آزمون / درس</label>
+                <input type="text" id="courseName" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً ریاضی جامع">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">درصد یا نمره</label>
+                <input type="number" id="examPercent" class="input-field w-full p-2 rounded-lg" placeholder="درصد وارد شود">
+            </div>
+        </form>
+
+        <form id="form_message" class="space-y-4 tab-content hidden-tab">
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">متن پیام</label>
+                <textarea id="studentMessage" rows="5" class="input-field w-full p-2 rounded-lg resize-none" placeholder="سوال یا مشکل خود را مطرح کنید..."></textarea>
+            </div>
+        </form>
+
+        <!-- فرم‌های ساده اطلاع‌رسانی -->
+        <div id="form_student_data" class="tab-content hidden-tab text-center text-sm">برای دریافت برنامه‌های امروز تایید کنید.</div>
+        <div id="form_my_stats" class="tab-content hidden-tab text-center text-sm">برای دریافت کارنامه آماری تایید کنید.</div>
+        <div id="form_sub_status" class="tab-content hidden-tab text-center text-sm">برای بررسی وضعیت قرارداد تایید کنید.</div>
+
+        <form id="form_send_task" class="space-y-4 tab-content hidden-tab">
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">شناسه دانش‌آموز</label>
+                <input type="number" id="targetStudentId" class="input-field w-full p-2 rounded-lg" placeholder="کد عددی">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">برنامه درسی</label>
+                <textarea id="taskText" rows="3" class="input-field w-full p-2 rounded-lg resize-none" placeholder="توضیحات تسک..."></textarea>
+            </div>
+        </form>
+
+        <form id="form_broadcast" class="space-y-4 tab-content hidden-tab">
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">پیام همگانی</label>
+                <textarea id="broadcastText" rows="5" class="input-field w-full p-2 rounded-lg resize-none" placeholder="ارسال برای تمامی دانش‌آموزان..."></textarea>
+            </div>
+        </form>
+
+        <div id="form_advisor_data" class="tab-content hidden-tab text-center text-sm">برای دریافت لیست شناسه‌ها تایید کنید.</div>
+        <div id="form_leaderboard" class="tab-content hidden-tab text-center text-sm">برای مشاهده رتبه‌بندی هفته تایید کنید.</div>
+
+        <form id="form_finance" class="space-y-4 tab-content hidden-tab">
+            <div class="space-y-1">
+                <label class="block text-sm font-semibold">شناسه دانش‌آموز</label>
+                <input type="number" id="financeStudentId" class="input-field w-full p-2 rounded-lg" placeholder="کد عددی">
+                <p class="text-xs opacity-70 text-gray-600 mt-2">با تایید شما، ۳۰ روز به اشتراک اضافه می‌شود.</p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        let currentRole = 'student';
+        let currentTab = 'report';
+        let studentField = 'تجربی'; // پیش‌فرض
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('role') === 'advisor') currentRole = 'advisor';
+        if (urlParams.get('field')) studentField = decodeURIComponent(urlParams.get('field'));
+
+        // دیتابیس دروس و فصل‌ها بر اساس رشته تحصیلی
+        const curriculumData = {
+            "تجربی": {
+                "زیست‌شناسی": ["فصل ۱: مولکول‌های اطلاعاتی", "فصل ۲: گوارش و جذب", "فصل ۳: تبادلات گازی", "فصل ۴: گردش مواد", "فصل ۵: تنظیم اسمزی", "مباحث ترکیبی", "سایر"],
+                "شیمی": ["فصل ۱: کیهان زادگاه الفبای هستی", "فصل ۲: ردپای گازها", "فصل ۳: آب، آهنگ زندگی", "مباحث ترکیبی", "سایر"],
+                "فیزیک": ["فصل ۱: فیزیک و اندازه‌گیری", "فصل ۲: ویژگی‌های مواد", "فصل ۳: کار و انرژی", "فصل ۴: دما و گرما", "سایر"],
+                "ریاضی": ["فصل ۱: مجموعه و الگو", "فصل ۲: مثلثات", "فصل ۳: توان‌های گویا", "فصل ۴: معادله‌ها", "سایر"],
+                "زمین‌شناسی": ["فصل ۱: آفرینش کیهان", "فصل ۲: منابع معدنی", "سایر"]
+            },
+            "ریاضی": {
+                "حسابان": ["فصل ۱: جبر و معادله", "فصل ۲: تابع", "فصل ۳: توابع نمایی", "فصل ۴: مثلثات", "فصل ۵: حد و پیوستگی", "سایر"],
+                "هندسه": ["فصل ۱: ماتریس", "فصل ۲: مقاطع مخروطی", "فصل ۳: بردارها", "سایر"],
+                "گسسته": ["فصل ۱: منطق ریاضی", "فصل ۲: گراف", "فصل ۳: ترکیبیات", "سایر"],
+                "فیزیک": ["فصل ۱: حرکت‌شناسی", "فصل ۲: دینامیک", "فصل ۳: نوسان و موج", "سایر"],
+                "شیمی": ["فصل ۱: ساختار اتم", "فصل ۲: ترمودینامیک", "سایر"]
+            },
+            "انسانی": {
+                "علوم و فنون ادبی": ["مبانی تحلیل متن", "موسیقی شعر", "سایر"],
+                "عربی تخصصی": ["معرفت و نکره", "انواع اعراب", "سایر"],
+                "جامعه‌شناسی": ["جهان اجتماعی", "فرهنگ", "سایر"],
+                "فلسفه و منطق": ["مفهوم و مصداق", "اقسام ذاتی و عرضی", "سایر"],
+                "ریاضی و آمار": ["عبارت‌های جبری", "معادله درجه دوم", "سایر"],
+                "تاریخ و جغرافیا": ["تاریخ ایران باستان", "جغرافیای جمعیت", "سایر"]
+            }
+        };
+
+        function initApp() {
+            if (currentRole === 'advisor') {
+                document.getElementById('appTitle').innerText = "پنل مدیریت مشاور";
+                currentTab = 'send_task';
+                document.querySelectorAll('.student-only').forEach(el => el.classList.add('hidden-tab'));
+                document.querySelectorAll('.advisor-only').forEach(el => el.classList.remove('hidden-tab'));
+            } else {
+                document.getElementById('appTitle').innerText = "پنل دانش‌آموز";
+                document.getElementById('studentInfo').innerText = `رشته تحصیلی: ${studentField}`;
+                document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
+                document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
+                loadSubjects(); // بارگذاری دروس بر اساس رشته
+            }
+            switchTab(currentTab);
+        }
+
+        // بارگذاری دروس در لیست کشویی
+        function loadSubjects() {
+            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
+            const subjectSelect = document.getElementById('subjectSelect');
+            subjectSelect.innerHTML = '';
+            
+            for (const subj in subjects) {
+                const opt = document.createElement('option');
+                opt.value = subj;
+                opt.innerText = subj;
+                subjectSelect.appendChild(opt);
+            }
+            updateChapters(); // پر کردن فصل‌ها برای درس اول
+        }
+
+        // بارگذاری مباحث وقتی درسی تغییر می‌کند
+        function updateChapters() {
+            const subjectSelect = document.getElementById('subjectSelect').value;
+            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
+            const chapters = subjects[subjectSelect] || ["سایر"];
+            
+            const chapterSelect = document.getElementById('chapterSelect');
+            chapterSelect.innerHTML = '';
+            
+            chapters.forEach(chap => {
+                const opt = document.createElement('option');
+                opt.value = chap;
+                opt.innerText = chap;
+                chapterSelect.appendChild(opt);
+            });
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-tab'));
+            document.getElementById('form_' + tabId).classList.remove('hidden-tab');
+            
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            event && event.currentTarget ? event.currentTarget.classList.add('active') : 
+                document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+
+            updateMainButton();
+        }
+
+        function updateMainButton() {
+            tg.MainButton.show();
+            tg.MainButton.color = tg.themeParams.button_color || "#3b82f6";
+            tg.MainButton.textColor = tg.themeParams.button_text_color || "#ffffff";
+            tg.MainButton.enable();
+
+            const titles = {
+                'report': "ارسال گزارش مطالعه",
+                'exam': "ثبت نتیجه آزمون",
+                'message': "ارسال پیام",
+                'student_data': "دریافت برنامه‌ها",
+                'my_stats': "مشاهده آمار",
+                'sub_status': "استعلام وضعیت قرارداد",
+                'send_task': "ارسال برنامه",
+                'broadcast': "ارسال اطلاعیه",
+                'advisor_data': "دریافت لیست",
+                'leaderboard': "مشاهده نفرات برتر",
+                'finance': "تایید تمدید اشتراک"
+            };
+            tg.MainButton.setText(titles[currentTab]);
+        }
+
+        Telegram.WebApp.onEvent('mainButtonClicked', function() {
+            let payload = { action: currentTab };
+
+            if (currentTab === 'report') {
+                payload.subject = document.getElementById('subjectSelect').value;
+                payload.chapter = document.getElementById('chapterSelect').value;
+                payload.hours = document.getElementById('studyHours').value;
+                payload.tests = document.getElementById('testCount').value;
+                payload.mood = document.getElementById('mood').value;
+                if(!payload.hours || !payload.tests) return tg.showAlert("لطفاً ساعت مطالعه و تست را وارد کنید.");
+            } 
+            else if (currentTab === 'exam') {
+                payload.course = document.getElementById('courseName').value;
+                payload.percent = document.getElementById('examPercent').value;
+                if(!payload.course || !payload.percent) return tg.showAlert("اطلاعات آزمون ناقص است.");
+            }
+            else if (currentTab === 'message') {
+                payload.text = document.getElementById('studentMessage').value;
+                if(!payload.text) return tg.showAlert("متن پیام خالی است.");
+            }
+            else if (currentTab === 'send_task') {
+                payload.student_id = document.getElementById('targetStudentId').value;
+                payload.task = document.getElementById('taskText').value;
+                if(!payload.student_id || !payload.task) return tg.showAlert("اطلاعات را کامل وارد کنید.");
+            }
+            else if (currentTab === 'broadcast') {
+                payload.text = document.getElementById('broadcastText').value;
+                if(!payload.text) return tg.showAlert("متن پیام خالی است.");
+            }
+            else if (currentTab === 'finance') {
+                payload.student_id = document.getElementById('financeStudentId').value;
+                if(!payload.student_id) return tg.showAlert("شناسه وارد نشده است.");
+            }
+
+            tg.sendData(JSON.stringify(payload));
+        });
+
+        initApp();
+    </script>
+</body>
+</html>
