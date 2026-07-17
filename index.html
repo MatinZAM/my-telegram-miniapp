@@ -62,33 +62,18 @@
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('finance')">تمدید اشتراک</button>
         </div>
 
-        <!-- فرم گزارش کار (پیشرفته و پویا) -->
         <form id="form_report" class="space-y-4 tab-content">
-            <div class="space-y-1">
-                <label class="block text-sm font-semibold">درس</label>
-                <select id="subjectSelect" class="input-field w-full p-2 rounded-lg" onchange="updateChapters()">
-                    <!-- گزینه‌ها توسط جاوااسکریپت پر می‌شوند -->
-                </select>
+            <div id="studyItemsContainer" class="space-y-4">
+                <!-- ردیف‌های مطالعه اینجا توسط جاوااسکریپت اضافه می‌شوند -->
             </div>
-            <div class="space-y-1">
-                <label class="block text-sm font-semibold">مبحث / فصل</label>
-                <select id="chapterSelect" class="input-field w-full p-2 rounded-lg">
-                    <!-- گزینه‌ها توسط جاوااسکریپت پر می‌شوند -->
-                </select>
-            </div>
-            <div class="flex space-x-4 space-x-reverse">
-                <div class="space-y-1 w-1/2">
-                    <label class="block text-sm font-semibold">ساعت مطالعه</label>
-                    <input type="number" id="studyHours" step="0.25" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۱.۵">
-                </div>
-                <div class="space-y-1 w-1/2">
-                    <label class="block text-sm font-semibold">تعداد تست</label>
-                    <input type="number" id="testCount" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۴۰">
-                </div>
-            </div>
-            <div class="space-y-1 mt-2">
-                <label class="block text-sm font-semibold">وضعیت انرژی</label>
-                <select id="mood" class="input-field w-full p-2 rounded-lg">
+            
+            <button type="button" onclick="addStudyItem()" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 text-sm font-bold shadow-sm transition-colors hover:bg-blue-100">
+                ➕ افزودن درس دیگر
+            </button>
+
+            <div class="space-y-1 mt-4 pt-4 border-t border-gray-200">
+                <label class="block text-sm font-semibold">وضعیت انرژی کل امروز</label>
+                <select id="mood" class="input-field w-full p-2 rounded-lg bg-white">
                     <option value="عالی">عالی</option>
                     <option value="خوب" selected>خوب</option>
                     <option value="متوسط">متوسط</option>
@@ -97,7 +82,6 @@
             </div>
         </form>
 
-        <!-- سایر فرم‌ها بدون استیکر -->
         <form id="form_exam" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1">
                 <label class="block text-sm font-semibold">نام آزمون / درس</label>
@@ -116,7 +100,6 @@
             </div>
         </form>
 
-        <!-- فرم‌های ساده اطلاع‌رسانی -->
         <div id="form_student_data" class="tab-content hidden-tab text-center text-sm">برای دریافت برنامه‌های امروز تایید کنید.</div>
         <div id="form_my_stats" class="tab-content hidden-tab text-center text-sm">برای دریافت کارنامه آماری تایید کنید.</div>
         <div id="form_sub_status" class="tab-content hidden-tab text-center text-sm">برای بررسی وضعیت قرارداد تایید کنید.</div>
@@ -163,7 +146,6 @@
         if (urlParams.get('role') === 'advisor') currentRole = 'advisor';
         if (urlParams.get('field')) studentField = decodeURIComponent(urlParams.get('field'));
 
-        // دیتابیس دروس و فصل‌ها بر اساس رشته تحصیلی
         const curriculumData = {
             "تجربی": {
                 "زیست‌شناسی": ["فصل ۱: مولکول‌های اطلاعاتی", "فصل ۲: گوارش و جذب", "فصل ۳: تبادلات گازی", "فصل ۴: گردش مواد", "فصل ۵: تنظیم اسمزی", "مباحث ترکیبی", "سایر"],
@@ -200,15 +182,61 @@
                 document.getElementById('studentInfo').innerText = `رشته تحصیلی: ${studentField}`;
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
-                loadSubjects(); // بارگذاری دروس بر اساس رشته
+                
+                document.getElementById('studyItemsContainer').innerHTML = '';
+                studyItemCount = 0;
+                addStudyItem(); // بارگذاری اولین باکس درس
             }
             switchTab(currentTab);
         }
 
-        // بارگذاری دروس در لیست کشویی
-        function loadSubjects() {
+        let studyItemCount = 0;
+
+        function addStudyItem() {
+            studyItemCount++;
+            const itemId = studyItemCount;
+            const container = document.getElementById('studyItemsContainer');
+            
+            const div = document.createElement('div');
+            // یک باکس زیبا با بک‌گراند متفاوت برای هر درس
+            div.className = "p-3 rounded-xl border border-gray-200 shadow-sm space-y-3 relative";
+            div.style.backgroundColor = "var(--tg-theme-secondary-bg-color, #f9fafb)";
+            div.id = `study_item_${itemId}`;
+            
+            // نمایش دکمه حذف برای دروس دوم به بعد
+            let removeBtn = '';
+            if (itemId > 1) {
+                removeBtn = `<button type="button" onclick="document.getElementById('study_item_${itemId}').remove()" class="absolute top-2 left-2 text-red-500 text-xs font-bold px-2 py-1 bg-red-50 rounded">حذف ✖</button>`;
+            }
+
+            div.innerHTML = `
+                ${removeBtn}
+                <div class="space-y-1">
+                    <label class="block text-sm font-semibold">درس</label>
+                    <select id="subject_${itemId}" class="input-field w-full p-2 rounded-lg" onchange="updateChaptersForId(${itemId})"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-semibold">مبحث / فصل</label>
+                    <select id="chapter_${itemId}" class="input-field w-full p-2 rounded-lg"></select>
+                </div>
+                <div class="flex space-x-4 space-x-reverse">
+                    <div class="space-y-1 w-1/2">
+                        <label class="block text-sm font-semibold">ساعت مطالعه</label>
+                        <input type="number" id="hours_${itemId}" step="0.25" min="0" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۱.۵">
+                    </div>
+                    <div class="space-y-1 w-1/2">
+                        <label class="block text-sm font-semibold">تعداد تست</label>
+                        <input type="number" id="tests_${itemId}" min="0" class="input-field w-full p-2 rounded-lg text-center" placeholder="مثلاً ۴۰">
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            loadSubjectsForId(itemId);
+        }
+
+        function loadSubjectsForId(id) {
             const subjects = curriculumData[studentField] || curriculumData["تجربی"];
-            const subjectSelect = document.getElementById('subjectSelect');
+            const subjectSelect = document.getElementById(`subject_${id}`);
             subjectSelect.innerHTML = '';
             
             for (const subj in subjects) {
@@ -217,16 +245,15 @@
                 opt.innerText = subj;
                 subjectSelect.appendChild(opt);
             }
-            updateChapters(); // پر کردن فصل‌ها برای درس اول
+            updateChaptersForId(id);
         }
 
-        // بارگذاری مباحث وقتی درسی تغییر می‌کند
-        function updateChapters() {
-            const subjectSelect = document.getElementById('subjectSelect').value;
+        function updateChaptersForId(id) {
+            const subjectSelect = document.getElementById(`subject_${id}`).value;
             const subjects = curriculumData[studentField] || curriculumData["تجربی"];
             const chapters = subjects[subjectSelect] || ["سایر"];
             
-            const chapterSelect = document.getElementById('chapterSelect');
+            const chapterSelect = document.getElementById(`chapter_${id}`);
             chapterSelect.innerHTML = '';
             
             chapters.forEach(chap => {
@@ -275,12 +302,34 @@
             let payload = { action: currentTab };
 
             if (currentTab === 'report') {
-                payload.subject = document.getElementById('subjectSelect').value;
-                payload.chapter = document.getElementById('chapterSelect').value;
-                payload.hours = document.getElementById('studyHours').value;
-                payload.tests = document.getElementById('testCount').value;
+                const items = document.querySelectorAll('[id^="study_item_"]');
+                let details = [];
+                let totalHours = 0;
+                let totalTests = 0;
+                let hasError = false;
+
+                items.forEach(item => {
+                    const id = item.id.split('_')[2];
+                    const subj = document.getElementById(`subject_${id}`).value;
+                    const chap = document.getElementById(`chapter_${id}`).value;
+                    const h = parseFloat(document.getElementById(`hours_${id}`).value) || 0;
+                    const t = parseInt(document.getElementById(`tests_${id}`).value) || 0;
+
+                    if (h === 0 && t === 0) {
+                        hasError = true;
+                    } else {
+                        details.push({ subject: subj, chapter: chap, hours: h, tests: t });
+                        totalHours += h;
+                        totalTests += t;
+                    }
+                });
+
+                if (hasError || details.length === 0) return tg.showAlert("لطفاً ساعت مطالعه و تست تمام درس‌ها را به درستی وارد کنید.");
+
+                payload.details = details;
+                payload.total_hours = totalHours;
+                payload.total_tests = totalTests;
                 payload.mood = document.getElementById('mood').value;
-                if(!payload.hours || !payload.tests) return tg.showAlert("لطفاً ساعت مطالعه و تست را وارد کنید.");
             } 
             else if (currentTab === 'exam') {
                 payload.course = document.getElementById('courseName').value;
