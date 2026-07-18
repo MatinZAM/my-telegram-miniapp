@@ -63,14 +63,12 @@
 
         <!-- 1. فرم گزارش کار دانش‌آموز -->
         <form id="form_report" class="space-y-4 tab-content">
-            <!-- بخش برنامه‌های تعیین شده توسط مشاور -->
             <div id="advisorTasksContainer" class="space-y-3 mb-6">
                 <!-- تسک‌ها اینجا اضافه میشن -->
             </div>
 
-            <!-- بخش افزودن دروس دستی -->
             <div id="studentSubjectsContainer" class="space-y-4 border-t-2 border-gray-200 pt-4">
-                <!-- فرم‌های درسی اضافه شده توسط دانش‌آموز اینجا قرار می‌گیرند -->
+                <!-- فرم‌های درسی اضافه شده توسط دانش‌آموز -->
             </div>
 
             <button type="button" onclick="addStudentSubjectForm()" class="w-full py-2 border-2 border-dashed border-green-500 text-green-600 font-bold rounded-lg mt-2">
@@ -88,14 +86,67 @@
             </div>
         </form>
 
+        <!-- 2. فرم آزمون دانش‌آموز (هوشمند) -->
         <form id="form_exam" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1">
-                <label class="block text-sm font-semibold">نام آزمون / درس</label>
-                <input type="text" id="courseName" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً ریاضی جامع">
+                <label class="block text-sm font-semibold">نوع آزمون</label>
+                <select id="examType" class="input-field w-full p-2 rounded-lg" onchange="toggleExamType()">
+                    <option value="تستی">تستی (آزمون آزمایشی)</option>
+                    <option value="تشریحی">تشریحی (مدرسه / نهایی)</option>
+                </select>
             </div>
-            <div class="space-y-1">
-                <label class="block text-sm font-semibold">درصد یا نمره</label>
-                <input type="number" id="examPercent" class="input-field w-full p-2 rounded-lg" placeholder="درصد وارد شود">
+
+            <!-- بخش تستی -->
+            <div id="exam_test_section" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="block text-sm font-semibold">موسسه برگزارکننده</label>
+                    <select id="examInstitute" class="input-field w-full p-2 rounded-lg">
+                        <option value="قلم‌چی (کانون)">قلم‌چی (کانون)</option>
+                        <option value="گاج">گاج</option>
+                        <option value="ماز">ماز</option>
+                        <option value="سنجش">سنجش</option>
+                        <option value="خیلی سبز">خیلی سبز</option>
+                        <option value="گزینه دو">گزینه دو</option>
+                        <option value="مدارس برتر (نشانه)">مدارس برتر (نشانه)</option>
+                        <option value="سایر">سایر آزمون‌ها</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2 space-x-reverse">
+                    <div class="w-1/3 space-y-1">
+                        <label class="block text-xs font-semibold text-green-600">درست</label>
+                        <input type="number" id="examCorrect" class="input-field w-full p-2 rounded-lg text-center font-bold" oninput="calculatePercent()" placeholder="0">
+                    </div>
+                    <div class="w-1/3 space-y-1">
+                        <label class="block text-xs font-semibold text-red-600">غلط</label>
+                        <input type="number" id="examWrong" class="input-field w-full p-2 rounded-lg text-center font-bold" oninput="calculatePercent()" placeholder="0">
+                    </div>
+                    <div class="w-1/3 space-y-1">
+                        <label class="block text-xs font-semibold text-gray-500">نزده</label>
+                        <input type="number" id="examEmpty" class="input-field w-full p-2 rounded-lg text-center font-bold" oninput="calculatePercent()" placeholder="0">
+                    </div>
+                </div>
+                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center mt-2">
+                    <span class="text-sm font-bold text-gray-700">درصد شما با نمره منفی: </span>
+                    <span id="examResultPercent" class="text-lg font-bold text-blue-600" dir="ltr">% 0.0</span>
+                </div>
+            </div>
+
+            <!-- بخش تشریحی -->
+            <div id="exam_desc_section" class="space-y-4 hidden-tab">
+                <div class="space-y-1">
+                    <label class="block text-sm font-semibold">درس امتحانی</label>
+                    <select id="examSubject" class="input-field w-full p-2 rounded-lg">
+                        <!-- جاوااسکریپت پر می‌کند -->
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-semibold">فصل / مباحث امتحانی</label>
+                    <input type="text" id="examChapters" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً: فصل 1 و 2">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-semibold">نمره کسب شده</label>
+                    <input type="number" step="0.25" id="examScore" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً: 18.5">
+                </div>
             </div>
         </form>
 
@@ -109,7 +160,7 @@
         <div id="form_my_stats" class="tab-content hidden-tab text-center text-sm">برای دریافت کارنامه آماری تایید کنید.</div>
         <div id="form_sub_status" class="tab-content hidden-tab text-center text-sm">برای بررسی وضعیت قرارداد تایید کنید.</div>
 
-        <!-- 2. فرم ارسال برنامه مشاور -->
+        <!-- 3. فرم ارسال برنامه مشاور -->
         <form id="form_send_task" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1 mb-4">
                 <label class="block text-sm font-semibold">انتخاب دانش‌آموز</label>
@@ -155,7 +206,6 @@
     </div>
 
     <script>
-        // اتصال مستقیم و خالص به تلگرام
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
@@ -166,16 +216,17 @@
         let advisorStudentsList = []; 
         let studentToDos = []; 
 
-        // خواندن پارامترهای آدرس (URL) که ربات پایتون فرستاده است
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('role') === 'advisor') {
             currentRole = 'advisor';
             if (urlParams.get('st_data')) {
                 const rawData = decodeURIComponent(urlParams.get('st_data')).split(',');
-                advisorStudentsList = rawData.map(item => {
-                    const parts = item.split('|');
-                    return { id: parts[0], name: parts[1], field: parts[2] };
-                });
+                if (rawData[0] !== "") {
+                    advisorStudentsList = rawData.map(item => {
+                        const parts = item.split('|');
+                        return { id: parts[0], name: parts[1], field: parts[2] };
+                    });
+                }
             }
         } else {
             if (urlParams.get('field')) studentField = decodeURIComponent(urlParams.get('field'));
@@ -224,24 +275,59 @@
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.remove('hidden-tab'));
                 
                 const stSelect = document.getElementById('targetStudentId');
-                advisorStudentsList.forEach(st => {
+                if (advisorStudentsList.length === 0) {
                     const opt = document.createElement('option');
-                    opt.value = st.id;
-                    opt.innerText = `${st.name} (${st.field})`;
-                    opt.dataset.field = st.field;
+                    opt.value = "";
+                    opt.innerText = "دانش‌آموزی یافت نشد";
                     stSelect.appendChild(opt);
-                });
-                
-                addAdvisorSubjectForm();
+                } else {
+                    advisorStudentsList.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.innerText = `${st.name} (${st.field})`;
+                        opt.dataset.field = st.field;
+                        stSelect.appendChild(opt);
+                    });
+                    addAdvisorSubjectForm();
+                }
             } else {
                 document.getElementById('appTitle').innerText = "پنل دانش‌آموز";
                 document.getElementById('studentInfo').innerText = `رشته تحصیلی: ${studentField}`;
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
                 
+                document.getElementById('examSubject').innerHTML = getSubjectsOptionsHtml(studentField);
                 renderStudentToDos();
             }
             switchTab(currentTab);
+        }
+
+        // توابع مربوط به آزمون
+        function toggleExamType() {
+            const type = document.getElementById('examType').value;
+            if (type === 'تستی') {
+                document.getElementById('exam_test_section').classList.remove('hidden-tab');
+                document.getElementById('exam_desc_section').classList.add('hidden-tab');
+            } else {
+                document.getElementById('exam_test_section').classList.add('hidden-tab');
+                document.getElementById('exam_desc_section').classList.remove('hidden-tab');
+            }
+        }
+
+        function calculatePercent() {
+            let correct = parseInt(document.getElementById('examCorrect').value) || 0;
+            let wrong = parseInt(document.getElementById('examWrong').value) || 0;
+            let empty = parseInt(document.getElementById('examEmpty').value) || 0;
+            
+            let total = correct + wrong + empty;
+            if (total === 0) {
+                document.getElementById('examResultPercent').innerText = "% 0.0";
+                return;
+            }
+            
+            // فرمول درصدگیری با نمره منفی
+            let percent = (((correct * 3) - wrong) / (total * 3)) * 100;
+            document.getElementById('examResultPercent').innerText = "% " + percent.toFixed(1);
         }
 
         function renderStudentToDos() {
@@ -254,7 +340,7 @@
                 title.innerText = "📋 برنامه‌های امروز از طرف مشاور:";
                 container.appendChild(title);
                 
-                studentToDos.forEach((todo, index) => {
+                studentToDos.forEach((todo) => {
                     const isChecked = todo.status === '1' ? 'checked' : '';
                     const div = document.createElement('div');
                     div.className = "flex items-center p-3 bg-blue-50 rounded-lg border border-blue-100";
@@ -275,19 +361,17 @@
         function addStudentSubjectForm() {
             const container = document.getElementById('studentSubjectsContainer');
             const index = container.children.length;
-            const field = studentField;
             
             const div = document.createElement('div');
             div.className = "p-3 bg-gray-50 rounded-lg border border-gray-200 relative";
-            div.id = `st_subject_group_${index}`;
             
-            const subjSelectHtml = getSubjectsOptionsHtml(field);
+            const subjSelectHtml = getSubjectsOptionsHtml(studentField);
             
             div.innerHTML = `
                 <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 left-2 text-red-500 font-bold text-lg leading-none">&times;</button>
                 <div class="space-y-1 mb-2">
                     <label class="block text-xs font-semibold">درس</label>
-                    <select class="st-subject-select input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(this, '${field}')">
+                    <select class="st-subject-select input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(this, '${studentField}')">
                         ${subjSelectHtml}
                     </select>
                 </div>
@@ -307,7 +391,7 @@
                 </div>
             `;
             container.appendChild(div);
-            updateRowChapters(div.querySelector('.st-subject-select'), field);
+            updateRowChapters(div.querySelector('.st-subject-select'), studentField);
         }
 
         function updateAdvisorCurriculum() {
@@ -317,22 +401,18 @@
 
         function addAdvisorSubjectForm() {
             const container = document.getElementById('advisorSubjectsContainer');
-            const index = container.children.length;
-            
             const stSelect = document.getElementById('targetStudentId');
-            if(!stSelect.options.length) return;
+            if(!stSelect.options.length || !stSelect.value) return;
             
             const selectedOption = stSelect.options[stSelect.selectedIndex];
             const field = selectedOption.dataset.field || "تجربی";
             
             const div = document.createElement('div');
             div.className = "p-3 bg-blue-50 rounded-lg border border-blue-200 relative";
-            div.id = `adv_subject_group_${index}`;
-            
             const subjSelectHtml = getSubjectsOptionsHtml(field);
             
             div.innerHTML = `
-                ${index > 0 ? `<button type="button" onclick="this.parentElement.remove()" class="absolute top-2 left-2 text-red-500 font-bold text-lg leading-none">&times;</button>` : ''}
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 left-2 text-red-500 font-bold text-lg leading-none">&times;</button>
                 <div class="space-y-1 mb-2">
                     <label class="block text-xs font-semibold">درس</label>
                     <select class="adv-subject-select input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(this, '${field}')">
@@ -409,14 +489,14 @@
                 'sub_status': "استعلام وضعیت قرارداد",
                 'send_task': "ثبت و ارسال برنامه",
                 'broadcast': "ارسال اطلاعیه",
-                'advisor_data': "دریافت لیست",
+                'advisor_data': "لیست دانش‌آموزان",
                 'leaderboard': "مشاهده نفرات برتر",
                 'finance': "تایید تمدید اشتراک"
             };
             tg.MainButton.setText(titles[currentTab]);
         }
 
-        function triggerMainButton() {
+        Telegram.WebApp.onEvent('mainButtonClicked', function() {
             let payload = { action: currentTab };
 
             if (currentTab === 'report') {
@@ -473,6 +553,32 @@
                 payload.total_tests = totalTests;
                 payload.mood = document.getElementById('mood').value;
             } 
+            else if (currentTab === 'exam') {
+                payload.exam_type = document.getElementById('examType').value;
+                
+                if (payload.exam_type === 'تستی') {
+                    payload.institute = document.getElementById('examInstitute').value;
+                    payload.correct = document.getElementById('examCorrect').value;
+                    payload.wrong = document.getElementById('examWrong').value || 0;
+                    payload.empty = document.getElementById('examEmpty').value || 0;
+                    
+                    if(!payload.correct) return tg.showAlert("تعداد پاسخ‌های درست را وارد کنید.");
+                    
+                    // محاسبه مجدد درصد برای اطمینان
+                    let c = parseInt(payload.correct) || 0;
+                    let w = parseInt(payload.wrong) || 0;
+                    let e = parseInt(payload.empty) || 0;
+                    let total = c + w + e;
+                    payload.percent = total > 0 ? (((c * 3) - w) / (total * 3)) * 100 : 0;
+                    
+                } else {
+                    payload.subject = document.getElementById('examSubject').value;
+                    payload.chapters = document.getElementById('examChapters').value;
+                    payload.score = document.getElementById('examScore').value;
+                    
+                    if(!payload.subject || !payload.score) return tg.showAlert("اطلاعات آزمون تشریحی ناقص است.");
+                }
+            }
             else if (currentTab === 'send_task') {
                 const stSelect = document.getElementById('targetStudentId');
                 if(!stSelect.value) return tg.showAlert("دانش‌آموزی برای ارسال برنامه وجود ندارد.");
@@ -498,11 +604,6 @@
                 if(details.length === 0) return tg.showAlert("لطفاً حداقل یک درس با ساعت و تست وارد کنید.");
                 payload.details = details;
             }
-            else if (currentTab === 'exam') {
-                payload.course = document.getElementById('courseName').value;
-                payload.percent = document.getElementById('examPercent').value;
-                if(!payload.course || !payload.percent) return tg.showAlert("اطلاعات آزمون ناقص است.");
-            }
             else if (currentTab === 'message') {
                 payload.text = document.getElementById('studentMessage').value;
                 if(!payload.text) return tg.showAlert("متن پیام خالی است.");
@@ -516,14 +617,9 @@
                 if(!payload.student_id) return tg.showAlert("شناسه وارد نشده است.");
             }
 
-            // ارسال مستقیم به ربات تلگرام بدون هیچ واسطه‌ای
             tg.sendData(JSON.stringify(payload));
-        }
+        });
 
-        // اتصال رویداد کلیک دکمه اصلی تلگرام به تابع ما
-        Telegram.WebApp.onEvent('mainButtonClicked', triggerMainButton);
-
-        // اجرای اولیه برنامه
         initApp();
     </script>
 </body>
