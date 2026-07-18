@@ -35,11 +35,6 @@
             font-weight: bold;
         }
         .hidden-tab { display: none; }
-        
-        .subject-row {
-            background-color: var(--tg-theme-secondary-bg-color, #f9fafb);
-            border: 1px dashed var(--tg-theme-hint-color, #d1d5db);
-        }
     </style>
 </head>
 <body class="p-4">
@@ -51,37 +46,39 @@
         </div>
 
         <div class="flex overflow-x-auto border-b border-gray-300 mb-6 pb-2 space-x-4 space-x-reverse text-sm" id="tabsContainer">
-            <!-- تب‌های دانش‌آموز (تب برنامه‌های من ادغام و حذف شد) -->
-            <button class="tab-btn active student-only" onclick="switchTab('report')">گزارش‌کار</button>
+            <!-- تب‌های دانش‌آموز -->
+            <button class="tab-btn active student-only" onclick="switchTab('report')">گزارش‌کار امروز</button>
             <button class="tab-btn student-only" onclick="switchTab('exam')">آزمون</button>
             <button class="tab-btn student-only" onclick="switchTab('message')">پیام به مشاور</button>
             <button class="tab-btn student-only" onclick="switchTab('my_stats')">کارنامه کل</button>
-            <button class="tab-btn student-only" onclick="switchTab('sub_status')">وضعیت قرارداد</button>
+            <button class="tab-btn student-only" onclick="switchTab('sub_status')">وضعیت اشتراک</button>
             
             <!-- تب‌های مشاور -->
-            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('send_task')">ثبت برنامه درسی</button>
-            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('weekly_reports')">لیست دانش‌آموزان</button>
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('send_task')">ارسال برنامه درسی</button>
+            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('advisor_data')">لیست دانش‌آموزان</button>
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('broadcast')">پیام همگانی</button>
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('leaderboard')">رتبه‌بندی</button>
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('finance')">تمدید اشتراک</button>
         </div>
 
-        <!-- فرم گزارش کار دانش‌آموز -->
+        <!-- فرم گزارش کار دانش‌آموز (مجهز به چک‌لیست و فرم دستی) -->
         <form id="form_report" class="space-y-4 tab-content">
             
             <!-- بخش چک‌لیست برنامه‌های مشاور -->
-            <div id="todoContainer" class="space-y-2 mb-6 hidden">
-                <h3 class="text-sm font-bold text-blue-700 mb-3 border-b-2 border-blue-100 pb-2">📋 برنامه‌های امروز مشاور (تیک بزنید):</h3>
-                <!-- چک‌باکس‌ها با جاوااسکریپت اینجا ساخته می‌شوند -->
+            <div id="todoSection" class="hidden mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                <div id="todoContainer"></div>
             </div>
 
-            <div id="subjectsContainer" class="space-y-4"></div>
-            <button type="button" onclick="addSubjectRow()" class="w-full py-2 border-2 border-dashed border-blue-400 text-blue-500 rounded-lg font-semibold hover:bg-blue-50 transition">
-                ➕ افزودن گزارش دستی (خارج از برنامه)
-            </button>
+            <!-- بخش فرم‌های دستی -->
+            <div class="mb-2 font-bold text-gray-700">اضافه کردن دروس مطالعه شده (خارج از برنامه):</div>
+            <div id="subjectsContainer" class="space-y-6"></div>
             
-            <div class="space-y-1 mt-4 pt-4 border-t border-gray-200">
-                <label class="block text-sm font-semibold">وضعیت انرژی امروز شما</label>
+            <button type="button" onclick="addSubjectRow()" class="w-full py-2 border-2 border-dashed border-blue-400 text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition">
+                ➕ افزودن درس دیگر
+            </button>
+
+            <div class="space-y-1 mt-6 pt-4 border-t border-gray-300">
+                <label class="block text-sm font-semibold">وضعیت انرژی شما امروز چطور بود؟</label>
                 <select id="mood" class="input-field w-full p-2 rounded-lg">
                     <option value="عالی">عالی</option>
                     <option value="خوب" selected>خوب</option>
@@ -91,49 +88,47 @@
             </div>
         </form>
 
+        <!-- فرم ارسال برنامه مشاور -->
+        <form id="form_send_task" class="space-y-4 tab-content hidden-tab">
+            <div class="space-y-1 mb-4">
+                <label class="block text-sm font-semibold">انتخاب دانش‌آموز</label>
+                <select id="taskStudentSelect" class="input-field w-full p-2 rounded-lg" onchange="updateAdvisorForm()">
+                    <option value="">در حال بارگذاری لیست...</option>
+                </select>
+            </div>
+
+            <div id="advisorSubjectsContainer" class="space-y-6"></div>
+            
+            <button type="button" onclick="addAdvisorSubjectRow()" class="w-full py-2 border-2 border-dashed border-green-400 text-green-600 rounded-lg font-bold hover:bg-green-50 transition mt-2">
+                ➕ افزودن درس به برنامه
+            </button>
+
+            <div class="space-y-1 mt-4">
+                <label class="block text-sm font-semibold">توضیحات اضافه (اختیاری)</label>
+                <textarea id="taskNotes" rows="2" class="input-field w-full p-2 rounded-lg resize-none" placeholder="نکته‌ای اگر هست بنویسید..."></textarea>
+            </div>
+        </form>
+
         <form id="form_exam" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1">
                 <label class="block text-sm font-semibold">نام آزمون / درس</label>
-                <input type="text" id="courseName" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً ریاضی جامع قلمچی">
+                <input type="text" id="courseName" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً قلمچی ۲۱ مهر">
             </div>
             <div class="space-y-1">
-                <label class="block text-sm font-semibold">درصد یا نمره</label>
-                <input type="number" id="examPercent" class="input-field w-full p-2 rounded-lg" placeholder="درصد وارد شود">
+                <label class="block text-sm font-semibold">درصد یا تراز</label>
+                <input type="number" id="examPercent" class="input-field w-full p-2 rounded-lg" placeholder="مقدار را وارد کنید">
             </div>
         </form>
 
         <form id="form_message" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1">
-                <label class="block text-sm font-semibold">متن پیام</label>
+                <label class="block text-sm font-semibold">متن پیام به مشاور</label>
                 <textarea id="studentMessage" rows="5" class="input-field w-full p-2 rounded-lg resize-none" placeholder="سوال یا مشکل خود را مطرح کنید..."></textarea>
             </div>
         </form>
 
         <div id="form_my_stats" class="tab-content hidden-tab text-center text-sm">برای دریافت کارنامه آماری تایید کنید.</div>
         <div id="form_sub_status" class="tab-content hidden-tab text-center text-sm">برای بررسی وضعیت قرارداد تایید کنید.</div>
-
-        <!-- فرم ثبت برنامه توسط مشاور -->
-        <form id="form_send_task" class="space-y-4 tab-content hidden-tab">
-            <div class="space-y-1 mb-4">
-                <label class="block text-sm font-semibold">انتخاب دانش‌آموز</label>
-                <select id="advisorStudentSelect" class="input-field w-full p-2 rounded-lg font-bold text-blue-600" onchange="onAdvisorStudentChange()">
-                    <!-- لیست دانش‌آموزان اینجا لود می‌شود -->
-                </select>
-            </div>
-            
-            <div id="advisorSubjectsContainer" class="space-y-4 border-t border-gray-300 pt-4">
-                <!-- ردیف‌های تعیین برنامه اینجا اضافه می‌شوند -->
-            </div>
-            
-            <button type="button" onclick="addAdvisorSubjectRow()" class="w-full py-2 border-2 border-dashed border-green-500 text-green-600 rounded-lg font-semibold hover:bg-green-50 transition">
-                ➕ افزودن درس دیگر به برنامه
-            </button>
-
-            <div class="space-y-1 mt-4 pt-4 border-t border-gray-200">
-                <label class="block text-sm font-semibold">توضیحات تکمیلی مشاور (اختیاری)</label>
-                <textarea id="advisorTaskNotes" rows="2" class="input-field w-full p-2 rounded-lg resize-none" placeholder="نکته خاصی اگر هست اینجا بنویسید..."></textarea>
-            </div>
-        </form>
 
         <form id="form_broadcast" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1">
@@ -142,11 +137,9 @@
             </div>
         </form>
 
-        <div id="form_weekly_reports" class="tab-content hidden-tab text-center text-sm flex flex-col items-center">
-            <span class="text-3xl mb-2">👥</span>
-            <p>با تایید شما، لیست دانش‌آموزان شما در چت تلگرام باز می‌شود. با کلیک روی نام هر شخص، می‌توانید گزارشات اخیر او را بررسی کنید.</p>
+        <div id="form_advisor_data" class="tab-content hidden-tab text-center text-sm">
+            با تایید این بخش، لیست تمام دانش‌آموزان برای شما در ربات ارسال می‌شود و می‌توانید با کلیک روی هر شخص، گزارش‌های اخیر او را چک کنید.
         </div>
-
         <div id="form_leaderboard" class="tab-content hidden-tab text-center text-sm">برای مشاهده رتبه‌بندی هفته تایید کنید.</div>
 
         <form id="form_finance" class="space-y-4 tab-content hidden-tab">
@@ -159,208 +152,267 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // بررسی اجرای برنامه داخل یا خارج از تلگرام
+        const isTgAvailable = typeof window.Telegram !== 'undefined' && window.Telegram.WebApp && window.Telegram.WebApp.initData !== '';
+        
+        const tg = isTgAvailable ? window.Telegram.WebApp : {
+            expand: () => {},
+            MainButton: { 
+                show: () => {}, enable: () => {}, setText: function(t) { this.text = t; }, text: "", color: "", textColor: "" 
+            },
+            themeParams: {},
+            sendData: (data) => { alert("محیط مرورگر: داده‌ها آماده ارسال به ربات هستند:\n" + data); },
+            showAlert: (msg) => alert(msg)
+        };
+
+        if (isTgAvailable) {
+            tg.expand();
+        }
         
         let currentRole = 'student';
         let currentTab = 'report';
-        let studentField = 'تجربی'; 
-        let rowCount = 0; 
-        
-        let advisorStudents = [];
-        let advisorStudentField = 'تجربی';
-        let advRowCount = 0; 
+        let studentField = 'تجربی';
+        let advisorStudentsList = []; // برای ذخیره لیست دانش‌آموزان مشاور
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('role') === 'advisor') currentRole = 'advisor';
-        if (urlParams.get('field')) studentField = decodeURIComponent(urlParams.get('field'));
         
+        // رفع باگ رشته تحصیلی
+        if (urlParams.get('field')) {
+            const decodedField = decodeURIComponent(urlParams.get('field'));
+            studentField = decodedField;
+        }
+
+        // اگر لیست دانش آموزان برای مشاور ارسال شده بود
         if (urlParams.get('st_data')) {
             const stDataStr = decodeURIComponent(urlParams.get('st_data'));
             if(stDataStr) {
-                const parts = stDataStr.split(',');
-                parts.forEach(p => {
-                    const [id, name, field] = p.split('|');
-                    advisorStudents.push({id, name, field});
+                stDataStr.split(',').forEach(item => {
+                    const parts = item.split('|');
+                    advisorStudentsList.push({ id: parts[0], name: parts[1], field: parts[2] });
                 });
             }
         }
 
         const curriculumData = {
             "تجربی": {
-                "زیست‌شناسی": ["فصل ۱: مولکول‌های اطلاعاتی", "فصل ۲: گوارش و جذب", "فصل ۳: تبادلات گازی", "فصل ۴: گردش مواد", "فصل ۵: تنظیم اسمزی", "مباحث ترکیبی", "سایر"],
-                "شیمی": ["فصل ۱: کیهان زادگاه الفبای هستی", "فصل ۲: ردپای گازها", "فصل ۳: آب، آهنگ زندگی", "مباحث ترکیبی", "سایر"],
-                "فیزیک": ["فصل ۱: فیزیک و اندازه‌گیری", "فصل ۲: ویژگی‌های مواد", "فصل ۳: کار و انرژی", "فصل ۴: دما و گرما", "سایر"],
-                "ریاضی": ["فصل ۱: مجموعه و الگو", "فصل ۲: مثلثات", "فصل ۳: توان‌های گویا", "فصل ۴: معادله‌ها", "سایر"],
-                "زمین‌شناسی": ["فصل ۱: آفرینش کیهان", "فصل ۲: منابع معدنی", "سایر"]
+                "زیست‌شناسی": ["فصل ۱", "فصل ۲", "فصل ۳", "فصل ۴", "فصل ۵", "مباحث ترکیبی", "سایر"],
+                "شیمی": ["فصل ۱", "فصل ۲", "فصل ۳", "مباحث ترکیبی", "سایر"],
+                "فیزیک": ["فصل ۱", "فصل ۲", "فصل ۳", "فصل ۴", "سایر"],
+                "ریاضی": ["فصل ۱", "فصل ۲", "فصل ۳", "فصل ۴", "سایر"],
+                "زمین‌شناسی": ["فصل ۱", "فصل ۲", "سایر"]
             },
             "ریاضی": {
-                "حسابان": ["فصل ۱: جبر و معادله", "فصل ۲: تابع", "فصل ۳: توابع نمایی", "فصل ۴: مثلثات", "فصل ۵: حد و پیوستگی", "سایر"],
-                "هندسه": ["فصل ۱: ماتریس", "فصل ۲: مقاطع مخروطی", "فصل ۳: بردارها", "سایر"],
-                "گسسته": ["فصل ۱: منطق ریاضی", "فصل ۲: گراف", "فصل ۳: ترکیبیات", "سایر"],
-                "فیزیک": ["فصل ۱: حرکت‌شناسی", "فصل ۲: دینامیک", "فصل ۳: نوسان و موج", "سایر"],
-                "شیمی": ["فصل ۱: ساختار اتم", "فصل ۲: ترمودینامیک", "سایر"]
+                "حسابان": ["فصل ۱", "فصل ۲", "فصل ۳", "فصل ۴", "فصل ۵", "سایر"],
+                "هندسه": ["فصل ۱", "فصل ۲", "فصل ۳", "سایر"],
+                "گسسته": ["فصل ۱", "فصل ۲", "فصل ۳", "سایر"],
+                "فیزیک": ["فصل ۱", "فصل ۲", "فصل ۳", "سایر"],
+                "شیمی": ["فصل ۱", "فصل ۲", "سایر"]
             },
             "انسانی": {
-                "علوم و فنون ادبی": ["مبانی تحلیل متن", "موسیقی شعر", "سایر"],
-                "عربی تخصصی": ["معرفت و نکره", "انواع اعراب", "سایر"],
+                "علوم و فنون ادبی": ["مبانی", "موسیقی شعر", "سایر"],
+                "عربی تخصصی": ["معرفت", "اعراب", "سایر"],
                 "جامعه‌شناسی": ["جهان اجتماعی", "فرهنگ", "سایر"],
-                "فلسفه و منطق": ["مفهوم و مصداق", "اقسام ذاتی و عرضی", "سایر"],
-                "ریاضی و آمار": ["عبارت‌های جبری", "معادله درجه دوم", "سایر"],
-                "تاریخ و جغرافیا": ["تاریخ ایران باستان", "جغرافیای جمعیت", "سایر"]
+                "فلسفه و منطق": ["مفهوم", "اقسام", "سایر"],
+                "ریاضی و آمار": ["عبارت‌ها", "معادله", "سایر"],
+                "تاریخ و جغرافیا": ["تاریخ", "جغرافیا", "سایر"]
             }
         };
-
-        function addSubjectRow() {
-            rowCount++;
-            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
-            let subjectOptions = '';
-            for (const subj in subjects) { subjectOptions += `<option value="${subj}">${subj}</option>`; }
-
-            const html = `
-                <div id="row_${rowCount}" class="subject-row p-3 rounded-lg relative border border-gray-200">
-                    <button type="button" onclick="removeSubjectRow(${rowCount})" class="absolute top-2 left-2 text-red-500 font-bold bg-red-100 rounded-full w-6 h-6 flex items-center justify-center">✕</button>
-                    <div class="space-y-1">
-                        <label class="block text-xs font-semibold">درس (دستی)</label>
-                        <select id="subject_${rowCount}" class="input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(${rowCount})">${subjectOptions}</select>
-                    </div>
-                    <div class="space-y-1 mt-2">
-                        <label class="block text-xs font-semibold">مبحث / فصل</label>
-                        <select id="chapter_${rowCount}" class="input-field w-full p-2 rounded-lg text-sm"></select>
-                    </div>
-                    <div class="flex space-x-2 space-x-reverse mt-2">
-                        <div class="w-1/2 space-y-1">
-                            <label class="block text-xs font-semibold">ساعت</label>
-                            <input type="number" id="hours_${rowCount}" step="0.25" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۱.۵">
-                        </div>
-                        <div class="w-1/2 space-y-1">
-                            <label class="block text-xs font-semibold">تعداد تست</label>
-                            <input type="number" id="tests_${rowCount}" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۴۰">
-                        </div>
-                    </div>
-                </div>`;
-            document.getElementById('subjectsContainer').insertAdjacentHTML('beforeend', html);
-            updateRowChapters(rowCount);
-        }
-
-        function removeSubjectRow(id) { document.getElementById(`row_${id}`).remove(); }
-
-        function updateRowChapters(rowId) {
-            const subjectVal = document.getElementById(`subject_${rowId}`).value;
-            const subjects = curriculumData[studentField] || curriculumData["تجربی"];
-            const chapters = subjects[subjectVal] || ["سایر"];
-            const chapterSelect = document.getElementById(`chapter_${rowId}`);
-            chapterSelect.innerHTML = '';
-            chapters.forEach(chap => { chapterSelect.innerHTML += `<option value="${chap}">${chap}</option>`; });
-        }
-
-        function onAdvisorStudentChange() {
-            const select = document.getElementById('advisorStudentSelect');
-            if(select.options.length > 0 && select.value) {
-                advisorStudentField = select.options[select.selectedIndex].getAttribute('data-field') || 'تجربی';
-                document.getElementById('advisorSubjectsContainer').innerHTML = ''; 
-                advRowCount = 0;
-                addAdvisorSubjectRow(); 
-            }
-        }
-
-        function addAdvisorSubjectRow() {
-            advRowCount++;
-            const subjects = curriculumData[advisorStudentField] || curriculumData["تجربی"];
-            let subjectOptions = '';
-            for (const subj in subjects) { subjectOptions += `<option value="${subj}">${subj}</option>`; }
-
-            const html = `
-                <div id="adv_row_${advRowCount}" class="subject-row p-3 rounded-lg relative bg-green-50 border-green-200">
-                    ${advRowCount > 1 ? `<button type="button" onclick="removeAdvisorSubjectRow(${advRowCount})" class="absolute top-2 left-2 text-red-500 font-bold bg-red-100 rounded-full w-6 h-6 flex items-center justify-center">✕</button>` : ''}
-                    <div class="space-y-1">
-                        <label class="block text-xs font-semibold">چه درسی بخواند؟</label>
-                        <select id="adv_subject_${advRowCount}" class="input-field w-full p-2 rounded-lg text-sm" onchange="updateAdvisorRowChapters(${advRowCount})">${subjectOptions}</select>
-                    </div>
-                    <div class="space-y-1 mt-2">
-                        <label class="block text-xs font-semibold">کدام مبحث؟</label>
-                        <select id="adv_chapter_${advRowCount}" class="input-field w-full p-2 rounded-lg text-sm"></select>
-                    </div>
-                    <div class="flex space-x-2 space-x-reverse mt-2">
-                        <div class="w-1/2 space-y-1">
-                            <label class="block text-xs font-semibold">حداقل ساعت</label>
-                            <input type="number" id="adv_hours_${advRowCount}" step="0.25" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۲">
-                        </div>
-                        <div class="w-1/2 space-y-1">
-                            <label class="block text-xs font-semibold">حداقل تست</label>
-                            <input type="number" id="adv_tests_${advRowCount}" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۵۰">
-                        </div>
-                    </div>
-                </div>`;
-            document.getElementById('advisorSubjectsContainer').insertAdjacentHTML('beforeend', html);
-            updateAdvisorRowChapters(advRowCount);
-        }
-
-        function removeAdvisorSubjectRow(id) { document.getElementById(`adv_row_${id}`).remove(); }
-
-        function updateAdvisorRowChapters(rowId) {
-            const subjectVal = document.getElementById(`adv_subject_${rowId}`).value;
-            const subjects = curriculumData[advisorStudentField] || curriculumData["تجربی"];
-            const chapters = subjects[subjectVal] || ["سایر"];
-            const chapterSelect = document.getElementById(`adv_chapter_${rowId}`);
-            chapterSelect.innerHTML = '';
-            chapters.forEach(chap => { chapterSelect.innerHTML += `<option value="${chap}">${chap}</option>`; });
-        }
 
         function initApp() {
             if (currentRole === 'advisor') {
                 document.getElementById('appTitle').innerText = "پنل مدیریت مشاور";
+                document.getElementById('studentInfo').innerText = "بخش ارسال برنامه و مدیریت";
                 currentTab = 'send_task';
                 document.querySelectorAll('.student-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.remove('hidden-tab'));
-                
-                const advisorSelect = document.getElementById('advisorStudentSelect');
-                if (advisorStudents.length > 0) {
-                    advisorStudents.forEach(st => {
-                        advisorSelect.innerHTML += `<option value="${st.id}" data-field="${st.field}">${st.name} (${st.field})</option>`;
-                    });
-                    onAdvisorStudentChange(); 
-                } else {
-                    advisorSelect.innerHTML = `<option value="">دانش‌آموزی یافت نشد</option>`;
-                }
-                
+                initAdvisorPanel();
             } else {
                 document.getElementById('appTitle').innerText = "پنل دانش‌آموز";
                 document.getElementById('studentInfo').innerText = `رشته تحصیلی: ${studentField}`;
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
                 
-                // لود کردن To-Do لیست مشاور
-                const todosParam = urlParams.get('todos');
-                if (todosParam) {
-                    const tasks = decodeURIComponent(todosParam).split(',');
-                    const container = document.getElementById('todoContainer');
-                    let hasValidTasks = false;
-                    tasks.forEach(task => {
-                        if(!task) return;
-                        const [id, data, status] = task.split('~'); // status 1 = checked
-                        if(!data) return;
-                        const parts = data.split('|');
-                        if(parts.length === 4) { // فرمت جدید
-                            hasValidTasks = true;
-                            const [subj, chap, hrs, tests] = parts;
-                            const isChecked = status === '1' ? 'checked' : '';
-                            const html = `
-                                <label class="flex items-center p-3 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition shadow-sm">
-                                    <input type="checkbox" class="task-checkbox w-5 h-5 text-blue-600 rounded mr-3 focus:ring-blue-500" value="${id}" data-subj="${subj}" data-chap="${chap}" data-hrs="${hrs}" data-tests="${tests}" ${isChecked}>
-                                    <div class="mr-3 text-sm flex-1">
-                                        <div class="font-bold text-gray-800">${subj} <span class="font-normal text-xs text-gray-500">(${chap})</span></div>
-                                        <div class="text-xs font-semibold text-blue-600 mt-1">⏱ ${hrs} ساعت | 📝 ${tests} تست</div>
-                                    </div>
-                                </label>
-                            `;
-                            container.insertAdjacentHTML('beforeend', html);
-                        }
-                    });
-                    if(hasValidTasks) container.classList.remove('hidden');
-                }
+                initTodoSection();
+                // یک ردیف خالی پیش‌فرض برای دستی وارد کردن
+                addSubjectRow(); 
             }
             switchTab(currentTab);
+        }
+
+        // پردازش چک‌لیست برنامه‌ها در پنل دانش‌آموز
+        function initTodoSection() {
+            if (urlParams.get('todos')) {
+                const todosStr = decodeURIComponent(urlParams.get('todos'));
+                if (todosStr) {
+                    const tasks = todosStr.split(',');
+                    const container = document.getElementById('todoContainer');
+                    container.innerHTML = '<h3 class="font-bold mb-2 text-blue-700">برنامه تنظیم شده توسط مشاور:</h3>';
+                    
+                    tasks.forEach(t => {
+                        const parts = t.split('~');
+                        const id = parts[0];
+                        const rawTask = parts[1];
+                        const status = parts[2];
+                        const taskInfo = rawTask.split('|'); // subject, chapter, hours, tests
+
+                        const isChecked = status == '1' ? 'checked' : '';
+                        
+                        let labelText = rawTask;
+                        if(taskInfo.length === 4) {
+                            labelText = `<span class="font-bold">${taskInfo[0]}</span> (${taskInfo[1]}) <br> <span class="text-xs text-gray-500">⏱ ${taskInfo[2]} ساعت | 📝 ${taskInfo[3]} تست</span>`;
+                        }
+
+                        const div = document.createElement('div');
+                        div.className = 'flex items-start space-x-3 space-x-reverse mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100';
+                        div.innerHTML = `
+                            <input type="checkbox" id="todo_${id}" value="${id}" class="task-checkbox mt-1 w-5 h-5 text-blue-600 rounded"
+                                   data-subj="${taskInfo[0] || rawTask}" data-chap="${taskInfo[1] || ''}"
+                                   data-hrs="${taskInfo[2] || 0}" data-tests="${taskInfo[3] || 0}" ${isChecked}>
+                            <label for="todo_${id}" class="text-sm cursor-pointer w-full leading-relaxed">${labelText}</label>
+                        `;
+                        container.appendChild(div);
+                    });
+                    document.getElementById('todoSection').classList.remove('hidden');
+                }
+            }
+        }
+
+        let rowCount = 0;
+        let advisorRowCount = 0;
+
+        function addSubjectRow() {
+            rowCount++;
+            const container = document.getElementById('subjectsContainer');
+            const rowDiv = document.createElement('div');
+            rowDiv.className = "bg-gray-50 p-3 rounded-xl border border-gray-200 subject-row relative";
+            rowDiv.id = `row_${rowCount}`;
+            
+            const closeBtn = rowCount > 1 ? `<button type="button" onclick="removeRow(${rowCount})" class="absolute top-2 left-2 text-red-500 font-bold">✖</button>` : '';
+
+            rowDiv.innerHTML = `
+                ${closeBtn}
+                <div class="space-y-1 mb-2">
+                    <label class="block text-xs font-semibold text-gray-600">درس</label>
+                    <select id="subject_${rowCount}" class="input-field w-full p-2 rounded-lg text-sm" onchange="updateChapters(${rowCount}, '${studentField}')"></select>
+                </div>
+                <div class="space-y-1 mb-2">
+                    <label class="block text-xs font-semibold text-gray-600">مبحث</label>
+                    <select id="chapter_${rowCount}" class="input-field w-full p-2 rounded-lg text-sm"></select>
+                </div>
+                <div class="flex space-x-2 space-x-reverse">
+                    <div class="space-y-1 w-1/2">
+                        <label class="block text-xs font-semibold text-gray-600">ساعت مطالعه</label>
+                        <input type="number" id="hours_${rowCount}" step="0.25" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۱.۵">
+                    </div>
+                    <div class="space-y-1 w-1/2">
+                        <label class="block text-xs font-semibold text-gray-600">تعداد تست</label>
+                        <input type="number" id="tests_${rowCount}" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="تعداد">
+                    </div>
+                </div>
+            `;
+            container.appendChild(rowDiv);
+            fillSubjectsSelect(`subject_${rowCount}`, studentField);
+            updateChapters(rowCount, studentField);
+        }
+
+        function removeRow(id) {
+            document.getElementById(`row_${id}`).remove();
+        }
+
+        function initAdvisorPanel() {
+            const select = document.getElementById('taskStudentSelect');
+            select.innerHTML = '<option value="">انتخاب دانش‌آموز...</option>';
+            advisorStudentsList.forEach(st => {
+                select.innerHTML += `<option value="${st.id}" data-field="${st.field}">${st.name} (کد: ${st.id}) - ${st.field}</option>`;
+            });
+        }
+
+        function updateAdvisorForm() {
+            const select = document.getElementById('taskStudentSelect');
+            if(select.selectedIndex === 0) return;
+            const selectedOption = select.options[select.selectedIndex];
+            const field = selectedOption.getAttribute('data-field') || "تجربی";
+            
+            document.getElementById('advisorSubjectsContainer').innerHTML = '';
+            advisorRowCount = 0;
+            addAdvisorSubjectRow(field);
+        }
+
+        function addAdvisorSubjectRow(forcedField = null) {
+            let field = forcedField;
+            if(!field) {
+                const select = document.getElementById('taskStudentSelect');
+                if(select.selectedIndex > 0) {
+                    field = select.options[select.selectedIndex].getAttribute('data-field');
+                } else {
+                    field = "تجربی";
+                }
+            }
+
+            advisorRowCount++;
+            const container = document.getElementById('advisorSubjectsContainer');
+            const rowDiv = document.createElement('div');
+            rowDiv.className = "bg-green-50 p-3 rounded-xl border border-green-200 adv-subject-row relative";
+            rowDiv.id = `adv_row_${advisorRowCount}`;
+            
+            const closeBtn = advisorRowCount > 1 ? `<button type="button" onclick="removeAdvRow(${advisorRowCount})" class="absolute top-2 left-2 text-red-500 font-bold">✖</button>` : '';
+
+            rowDiv.innerHTML = `
+                ${closeBtn}
+                <div class="space-y-1 mb-2">
+                    <label class="block text-xs font-semibold text-gray-600">درس</label>
+                    <select id="adv_subject_${advisorRowCount}" class="input-field w-full p-2 rounded-lg text-sm" onchange="updateAdvChapters(${advisorRowCount}, '${field}')"></select>
+                </div>
+                <div class="space-y-1 mb-2">
+                    <label class="block text-xs font-semibold text-gray-600">مبحث</label>
+                    <select id="adv_chapter_${advisorRowCount}" class="input-field w-full p-2 rounded-lg text-sm"></select>
+                </div>
+                <div class="flex space-x-2 space-x-reverse">
+                    <div class="space-y-1 w-1/2">
+                        <label class="block text-xs font-semibold text-gray-600">ساعت تعیین شده</label>
+                        <input type="number" id="adv_hours_${advisorRowCount}" step="0.25" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="مثلاً ۲">
+                    </div>
+                    <div class="space-y-1 w-1/2">
+                        <label class="block text-xs font-semibold text-gray-600">تست تعیین شده</label>
+                        <input type="number" id="adv_tests_${advisorRowCount}" class="input-field w-full p-2 rounded-lg text-center text-sm" placeholder="تعداد">
+                    </div>
+                </div>
+            `;
+            container.appendChild(rowDiv);
+            fillSubjectsSelect(`adv_subject_${advisorRowCount}`, field);
+            updateAdvChapters(advisorRowCount, field);
+        }
+
+        function removeAdvRow(id) {
+            document.getElementById(`adv_row_${id}`).remove();
+        }
+
+        function fillSubjectsSelect(selectId, field) {
+            const subjects = curriculumData[field] || curriculumData["تجربی"];
+            const select = document.getElementById(selectId);
+            select.innerHTML = '';
+            for (const subj in subjects) {
+                select.innerHTML += `<option value="${subj}">${subj}</option>`;
+            }
+        }
+
+        function updateChapters(rowId, field) {
+            const subjValue = document.getElementById(`subject_${rowId}`).value;
+            const subjects = curriculumData[field] || curriculumData["تجربی"];
+            const chapters = subjects[subjValue] || ["سایر"];
+            const chapSelect = document.getElementById(`chapter_${rowId}`);
+            chapSelect.innerHTML = '';
+            chapters.forEach(chap => chapSelect.innerHTML += `<option value="${chap}">${chap}</option>`);
+        }
+
+        function updateAdvChapters(rowId, field) {
+            const subjValue = document.getElementById(`adv_subject_${rowId}`).value;
+            const subjects = curriculumData[field] || curriculumData["تجربی"];
+            const chapters = subjects[subjValue] || ["سایر"];
+            const chapSelect = document.getElementById(`adv_chapter_${rowId}`);
+            chapSelect.innerHTML = '';
+            chapters.forEach(chap => chapSelect.innerHTML += `<option value="${chap}">${chap}</option>`);
         }
 
         function switchTab(tabId) {
@@ -382,21 +434,35 @@
             tg.MainButton.enable();
 
             const titles = {
-                'report': "ارسال گزارش مطالعه",
+                'report': "ثبت نهایی گزارش امروز",
                 'exam': "ثبت نتیجه آزمون",
                 'message': "ارسال پیام",
                 'my_stats': "مشاهده آمار",
                 'sub_status': "استعلام وضعیت قرارداد",
                 'send_task': "ثبت و ارسال برنامه",
                 'broadcast': "ارسال اطلاعیه",
-                'weekly_reports': "دریافت لیست دانش‌آموزان",
+                'advisor_data': "دریافت لیست",
                 'leaderboard': "مشاهده نفرات برتر",
                 'finance': "تایید تمدید اشتراک"
             };
             tg.MainButton.setText(titles[currentTab]);
+            
+            // ساخت دکمه مجازی برای تست در مرورگر (خارج از تلگرام)
+            if (!isTgAvailable) {
+                let fakeBtn = document.getElementById('fakeMainBtn');
+                if (!fakeBtn) {
+                    fakeBtn = document.createElement('button');
+                    fakeBtn.id = 'fakeMainBtn';
+                    fakeBtn.className = 'w-full fixed bottom-0 left-0 p-4 text-white font-bold text-center z-50';
+                    fakeBtn.onclick = handleMainButtonClick;
+                    document.body.appendChild(fakeBtn);
+                }
+                fakeBtn.style.backgroundColor = tg.MainButton.color || "#3b82f6";
+                fakeBtn.innerText = tg.MainButton.text;
+            }
         }
 
-        Telegram.WebApp.onEvent('mainButtonClicked', function() {
+        function handleMainButtonClick() {
             let payload = { action: currentTab };
 
             if (currentTab === 'report') {
@@ -404,22 +470,27 @@
                 let totalHours = 0;
                 let totalTests = 0;
                 let taskUpdates = [];
-                let hasError = false;
 
-                // 1. بررسی چک‌باکس‌های برنامه (تیک خورده‌ها و نخورده‌ها برای آپدیت وضعیت)
+                // 1. بررسی چک‌باکس‌های برنامه (تیک خورده‌ها و نخورده‌ها)
                 document.querySelectorAll('.task-checkbox').forEach(cb => {
                     const isDone = cb.checked;
                     taskUpdates.push({ id: parseInt(cb.value), done: isDone });
                     
+                    const subj = cb.getAttribute('data-subj');
+                    const chap = cb.getAttribute('data-chap');
+                    const h = parseFloat(cb.getAttribute('data-hrs') || 0);
+                    const t = parseInt(cb.getAttribute('data-tests') || 0);
+
                     if (isDone) {
-                        const h = parseFloat(cb.getAttribute('data-hrs') || 0);
-                        const t = parseInt(cb.getAttribute('data-tests') || 0);
                         details.push({
-                            subject: cb.getAttribute('data-subj') + " (طبق برنامه)",
-                            chapter: cb.getAttribute('data-chap'),
-                            hours: h, tests: t
+                            subject: subj, chapter: chap, hours: h, tests: t, status: "✅ کامل انجام شد"
                         });
                         totalHours += h; totalTests += t;
+                    } else {
+                        // درسی که انجام نداده صفر ثبت می‌شود و برچسب می‌گیرد
+                        details.push({
+                            subject: subj, chapter: chap, hours: 0, tests: 0, status: "❌ انجام نشد"
+                        });
                     }
                 });
 
@@ -429,46 +500,50 @@
                     const rowId = row.id.split('_')[1];
                     const h = parseFloat(document.getElementById(`hours_${rowId}`).value || 0);
                     const t = parseInt(document.getElementById(`tests_${rowId}`).value || 0);
-                    if (h <= 0 && t <= 0) hasError = true;
-                    details.push({
-                        subject: document.getElementById(`subject_${rowId}`).value,
-                        chapter: document.getElementById(`chapter_${rowId}`).value,
-                        hours: h, tests: t
-                    });
-                    totalHours += h; totalTests += t;
+                    
+                    // فقط در صورتی اضافه کن که دانَش‌آموز واقعاً عددی وارد کرده باشد
+                    if (h > 0 || t > 0) {
+                        details.push({
+                            subject: document.getElementById(`subject_${rowId}`).value,
+                            chapter: document.getElementById(`chapter_${rowId}`).value,
+                            hours: h, tests: t, status: "➕ ثبت دستی"
+                        });
+                        totalHours += h; totalTests += t;
+                    }
                 });
 
-                if (hasError) return tg.showAlert("لطفاً ساعت و تست فرم‌های دستی را وارد کنید.");
-                if (details.length === 0) return tg.showAlert("هیچ درسی ثبت نشده است! (یا تیک برنامه‌ها را بزنید یا دستی وارد کنید)");
+                if (details.length === 0) return tg.showAlert("هیچ درسی ثبت نشده است! لطفاً تیک برنامه‌ها را بزنید یا اطلاعات را دستی وارد کنید.");
 
                 payload.details = details;
                 payload.total_hours = totalHours;
                 payload.total_tests = totalTests;
+                payload.task_updates = taskUpdates;
                 payload.mood = document.getElementById('mood').value;
-                payload.task_updates = taskUpdates; // برای آپدیت وضعیت در دیتابیس
             } 
             else if (currentTab === 'send_task') {
-                const targetStudent = document.getElementById('advisorStudentSelect').value;
-                if(!targetStudent) return tg.showAlert("لطفاً ابتدا دانش‌آموز را انتخاب کنید.");
-                
-                const advRows = document.querySelectorAll('#advisorSubjectsContainer .subject-row');
-                let advDetails = [], hasError = false;
-                advRows.forEach(row => {
+                payload.student_id = document.getElementById('taskStudentSelect').value;
+                if(!payload.student_id) return tg.showAlert("ابتدا یک دانش‌آموز را انتخاب کنید.");
+
+                let taskDetails = [];
+                let hasError = false;
+                const rows = document.querySelectorAll('#form_send_task .adv-subject-row');
+                rows.forEach(row => {
                     const rowId = row.id.split('_')[2];
                     const h = parseFloat(document.getElementById(`adv_hours_${rowId}`).value || 0);
                     const t = parseInt(document.getElementById(`adv_tests_${rowId}`).value || 0);
                     if (h <= 0 && t <= 0) hasError = true;
-                    advDetails.push({
+                    taskDetails.push({
                         subject: document.getElementById(`adv_subject_${rowId}`).value,
                         chapter: document.getElementById(`adv_chapter_${rowId}`).value,
                         hours: h, tests: t
                     });
                 });
-                
-                if (hasError || advDetails.length === 0) return tg.showAlert("مقادیر فرم برنامه‌ریزی ناقص است.");
-                payload.student_id = targetStudent;
-                payload.details = advDetails;
-                payload.notes = document.getElementById('advisorTaskNotes').value;
+
+                if (hasError) return tg.showAlert("لطفاً ساعت و تست تمامی فرم‌ها را وارد کنید.");
+                if (taskDetails.length === 0) return tg.showAlert("هیچ درسی برای برنامه تعیین نشده است.");
+
+                payload.details = taskDetails;
+                payload.notes = document.getElementById('taskNotes').value;
             }
             else if (currentTab === 'exam') {
                 payload.course = document.getElementById('courseName').value;
@@ -489,7 +564,11 @@
             }
 
             tg.sendData(JSON.stringify(payload));
-        });
+        }
+
+        if (isTgAvailable) {
+            Telegram.WebApp.onEvent('mainButtonClicked', handleMainButtonClick);
+        }
 
         initApp();
     </script>
