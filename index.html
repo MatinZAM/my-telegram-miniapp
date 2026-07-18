@@ -35,22 +35,6 @@
             font-weight: bold;
         }
         .hidden-tab { display: none; }
-        
-        /* استایل دکمه مجازی برای محیط مرورگر (خارج از تلگرام) */
-        #fakeMainButton {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px;
-            background-color: #3b82f6;
-            color: white;
-            text-align: center;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 1000;
-        }
     </style>
 </head>
 <body class="p-4">
@@ -77,7 +61,7 @@
             <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('finance')">تمدید اشتراک</button>
         </div>
 
-        <!-- 1. فرم گزارش کار دانش‌آموز (شامل تیک‌های مشاور + افزودن دستی) -->
+        <!-- 1. فرم گزارش کار دانش‌آموز -->
         <form id="form_report" class="space-y-4 tab-content">
             <!-- بخش برنامه‌های تعیین شده توسط مشاور -->
             <div id="advisorTasksContainer" class="space-y-3 mb-6">
@@ -104,7 +88,6 @@
             </div>
         </form>
 
-        <!-- سایر تب‌های دانش‌آموز -->
         <form id="form_exam" class="space-y-4 tab-content hidden-tab">
             <div class="space-y-1">
                 <label class="block text-sm font-semibold">نام آزمون / درس</label>
@@ -149,7 +132,6 @@
             </div>
         </form>
 
-        <!-- سایر تب‌های مشاور -->
         <div id="form_advisor_data" class="tab-content hidden-tab text-center text-sm">
             لیست دانش‌آموزان را مستقیماً در چت تلگرام دریافت خواهید کرد. تایید کنید.
         </div>
@@ -172,31 +154,11 @@
         </form>
     </div>
 
-    <!-- دکمه تست در محیط مرورگر -->
-    <div id="fakeMainButton" style="display: none;" onclick="triggerMainButton()">ثبت اطلاعات (تست مرورگر)</div>
-
     <script>
+        // اتصال مستقیم و خالص به تلگرام
         const tg = window.Telegram.WebApp;
-        let isTgAvailable = false;
-        
-        // سیستم تشخیص بسیار دقیق تلگرام (حل مشکل دسکتاپ و مرورگر)
-        if (tg.initData !== "" || (tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0)) {
-            isTgAvailable = true;
-            tg.expand();
-            tg.ready();
-        } else {
-            console.log("Running outside Telegram. Mocking functionality...");
-            document.getElementById('fakeMainButton').style.display = 'block';
-            tg.sendData = (data) => { alert("محیط مرورگر: داده‌ها آماده ارسال به ربات هستند:\n\n" + data); };
-            tg.showAlert = (msg) => alert(msg);
-            tg.MainButton = { 
-                show: () => { document.getElementById('fakeMainButton').style.display = 'block'; }, 
-                enable: () => {}, 
-                setText: function(t) { document.getElementById('fakeMainButton').innerText = t; }, 
-                text: "", color: "", textColor: "" 
-            };
-            tg.themeParams = {};
-        }
+        tg.expand();
+        tg.ready();
         
         let currentRole = 'student';
         let currentTab = 'report';
@@ -221,8 +183,8 @@
                 const rawTodos = decodeURIComponent(urlParams.get('todos')).split(',');
                 if(rawTodos[0] !== "") {
                     studentToDos = rawTodos.map(item => {
-                        const p = item.split('~'); // id~task_text~status
-                        const data = p[1].split('|'); // subject|chapter|hours|tests
+                        const p = item.split('~');
+                        const data = p[1].split('|');
                         return { id: p[0], subject: data[0], chapter: data[1], hours: data[2], tests: data[3], status: p[2] };
                     });
                 }
@@ -554,6 +516,7 @@
                 if(!payload.student_id) return tg.showAlert("شناسه وارد نشده است.");
             }
 
+            // ارسال مستقیم به ربات تلگرام بدون هیچ واسطه‌ای
             tg.sendData(JSON.stringify(payload));
         }
 
