@@ -1,209 +1,386 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>پنل کاربری دستیار مشاور</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    },
+                    colors: {
+                        tgBlue: '#3390ec',
+                        tgDarkBg: '#1c1c1d',
+                        tgCardBg: '#2c2c2e',
+                        tgInputDark: '#3a3a3c',
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--tg-theme-bg-color, #f3f4f6);
-            color: var(--tg-theme-text-color, #1f2937);
-            padding-bottom: 80px;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 90px; /* Space for MainButton */
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        .input-field {
-            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            border: 1px solid var(--tg-theme-hint-color, #d1d5db);
-        }
-        .input-field:focus {
-            border-color: var(--tg-theme-button-color, #3b82f6);
+        
+        /* فرم‌ها و اینپوت‌های مدرن */
+        .input-modern {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            border: 1.5px solid transparent;
             outline: none;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.875rem;
         }
-        .tab-btn {
-            white-space: nowrap;
-            padding: 0.5rem 1rem;
-            color: var(--tg-theme-hint-color, #6b7280);
+        
+        .light .input-modern {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            border-color: #e5e7eb;
         }
-        .tab-btn.active {
-            border-bottom: 2px solid var(--tg-theme-button-color, #3b82f6);
-            color: var(--tg-theme-button-color, #3b82f6);
+        
+        .dark .input-modern {
+            background-color: #3a3a3c;
+            color: #f9fafb;
+            border-color: #4b5563;
+        }
+
+        .input-modern:focus {
+            border-color: #3390ec;
+            background-color: transparent;
+            box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.15);
+        }
+
+        /* استایل منوی کشویی */
+        .sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* انیمیشن محتوا */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden-tab { display: none !important; }
+
+        /* چک‌باکس‌های اختصاصی و زیبا */
+        .custom-checkbox {
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 0.375rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .light .custom-checkbox {
+            background-color: #e5e7eb;
+            border: 2px solid #d1d5db;
+        }
+        
+        .dark .custom-checkbox {
+            background-color: #3a3a3c;
+            border: 2px solid #4b5563;
+        }
+
+        .custom-checkbox:checked {
+            background-color: #3390ec;
+            border-color: #3390ec;
+        }
+
+        .custom-checkbox:checked::after {
+            content: '✓';
+            color: white;
+            font-size: 0.875rem;
             font-weight: bold;
         }
-        .hidden-tab { display: none; }
     </style>
 </head>
-<body class="p-4">
+<body class="bg-gray-100 text-gray-800 dark:bg-tgDarkBg dark:text-gray-100 min-h-screen">
 
-    <div class="max-w-md mx-auto">
-        <div class="text-center mb-6">
-            <h1 class="text-xl font-bold" id="appTitle">در حال بارگذاری...</h1>
-            <p class="text-sm opacity-70 mt-1" id="studentInfo"></p>
+    <header class="sticky top-0 z-40 w-full bg-white dark:bg-tgCardBg shadow-sm border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
+        <div class="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
+            
+            <!-- دکمه همبرگری -->
+            <button onclick="toggleSidebar()" class="p-2 -mr-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+            </button>
+
+            <!-- عنوان اپلیکیشن -->
+            <h1 class="text-lg font-bold text-tgBlue" id="appTitle">در حال بارگذاری...</h1>
+
+            <!-- دکمه تغییر تم -->
+            <button onclick="toggleTheme()" class="p-2 -ml-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none">
+                <!-- آیکون خورشید (برای تم روشن) -->
+                <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 hidden dark:block">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                </svg>
+                <!-- آیکون ماه (برای تم تاریک) -->
+                <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 block dark:hidden">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
+
+    <aside id="sidebar" class="fixed top-0 right-0 w-64 h-full bg-white dark:bg-tgCardBg z-50 shadow-2xl transform translate-x-full sidebar flex flex-col">
+        <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <span class="font-bold text-lg">منوی دسترسی</span>
+            <button onclick="toggleSidebar()" class="text-gray-500 hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        
+        <!-- اطلاعات پایه -->
+        <div class="px-5 py-3 bg-blue-50 dark:bg-tgBlue/10 mb-2">
+            <p class="text-xs font-semibold text-tgBlue" id="studentInfoMenu">در حال دریافت اطلاعات...</p>
         </div>
 
-        <div class="flex overflow-x-auto border-b border-gray-300 mb-6 pb-2 space-x-4 space-x-reverse text-sm" id="tabsContainer">
+        <nav class="flex-1 overflow-y-auto px-3 py-2 space-y-1 text-sm font-medium" id="sidebarMenu">
             <!-- تب‌های دانش‌آموز -->
-            <button class="tab-btn active student-only" onclick="switchTab('report')">گزارش‌کار</button>
-            <button class="tab-btn student-only" onclick="switchTab('exam')">آزمون</button>
-            <button class="tab-btn student-only" onclick="switchTab('message')">پیام به مشاور</button>
-            <button class="tab-btn student-only" onclick="switchTab('my_stats')">کارنامه کل</button>
-            <button class="tab-btn student-only" onclick="switchTab('sub_status')">وضعیت اشتراک</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 student-only tab-btn active-tab" onclick="switchTab('report')">📝 فرم گزارش‌کار روزانه</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 student-only tab-btn" onclick="switchTab('exam')">🎯 ثبت نتیجه آزمون</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 student-only tab-btn" onclick="switchTab('message')">💬 پیام به مشاور</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 student-only tab-btn" onclick="switchTab('my_stats')">📊 کارنامه کل من</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 student-only tab-btn" onclick="switchTab('sub_status')">⏳ وضعیت اشتراک</button>
             
             <!-- تب‌های مشاور -->
-            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('send_task')">ارسال برنامه</button>
-            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('advisor_data')">لیست دانش‌آموزان</button>
-            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('broadcast')">پیام همگانی</button>
-            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('leaderboard')">رتبه‌بندی</button>
-            <button class="tab-btn advisor-only hidden-tab" onclick="switchTab('finance')">تمدید اشتراک</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 advisor-only hidden-tab tab-btn" onclick="switchTab('send_task')">📋 ثبت برنامه برای دانش‌آموز</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 advisor-only hidden-tab tab-btn" onclick="switchTab('advisor_data')">👥 لیست و گزارش دانش‌آموزان</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 advisor-only hidden-tab tab-btn" onclick="switchTab('broadcast')">📢 ارسال پیام همگانی</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 advisor-only hidden-tab tab-btn" onclick="switchTab('leaderboard')">🏆 رتبه‌بندی هفته</button>
+            <button class="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200 advisor-only hidden-tab tab-btn" onclick="switchTab('finance')">💳 تمدید اشتراک</button>
+        </nav>
+    </aside>
+
+    <main class="max-w-md mx-auto p-4 mt-2 relative z-0">
+        
+        <!-- عنوان متغیر تب‌ها -->
+        <h2 class="text-xl font-extrabold mb-5 text-gray-800 dark:text-white" id="sectionTitle">گزارش‌کار امروز</h2>
+
+        <!-- 1. فرم گزارش کار دانش‌آموز (هوشمند) -->
+        <form id="form_report" class="space-y-5 tab-content fade-in">
+            <!-- کانتینر برنامه‌های ارسالی مشاور -->
+            <div id="advisorTasksContainer" class="space-y-3">
+                <!-- تسک‌های دریافتی اینجا رندر میشن -->
+            </div>
+
+            <!-- کانتینر دروس دستی دانش‌آموز -->
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft">
+                <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">➕ افزودن مطالعه خارج از برنامه</h3>
+                <div id="studentSubjectsContainer" class="space-y-4">
+                    <!-- فرم‌های درسی اضافه شده توسط دانش‌آموز -->
+                </div>
+                
+                <button type="button" onclick="addStudentSubjectForm()" class="w-full mt-4 py-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-bold rounded-xl border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                    افزودن درس جدید
+                </button>
+            </div>
+
+            <!-- وضعیت بازدهی -->
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft">
+                <label class="block text-sm font-bold mb-2">انرژی و بازدهی شما امروز چطور بود؟</label>
+                <select id="mood" class="input-modern">
+                    <option value="عالی">🌟 عالی و پر انرژی</option>
+                    <option value="خوب" selected>👍 خوب و نرمال</option>
+                    <option value="متوسط">😐 متوسط</option>
+                    <option value="خسته">خسته و بی‌حوصله 🥱</option>
+                </select>
+            </div>
+        </form>
+
+        <!-- 2. فرم آزمون دانش‌آموز (تستی / تشریحی) -->
+        <form id="form_exam" class="space-y-5 tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">نوع آزمون خود را مشخص کنید</label>
+                    <select id="examType" class="input-modern" onchange="toggleExamType()">
+                        <option value="تستی">تستی (آزمون آزمایشی / قلم‌چی، گاج و...)</option>
+                        <option value="تشریحی">تشریحی (امتحانات مدرسه / نهایی)</option>
+                    </select>
+                </div>
+
+                <!-- بخش تستی -->
+                <div id="exam_test_section" class="space-y-5 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold">موسسه برگزارکننده</label>
+                        <select id="examInstitute" class="input-modern">
+                            <option value="قلم‌چی (کانون)">قلم‌چی (کانون)</option>
+                            <option value="گاج">گاج</option>
+                            <option value="ماز (Maz)">ماز</option>
+                            <option value="سنجش">سنجش</option>
+                            <option value="خیلی سبز">خیلی سبز</option>
+                            <option value="گزینه دو">گزینه دو</option>
+                            <option value="سایر">سایر آزمون‌ها</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="space-y-1 text-center">
+                            <label class="block text-xs font-bold text-green-600 dark:text-green-400">✅ درست</label>
+                            <input type="number" id="examCorrect" class="input-modern text-center font-bold text-lg" oninput="calculatePercent()" placeholder="0">
+                        </div>
+                        <div class="space-y-1 text-center">
+                            <label class="block text-xs font-bold text-red-600 dark:text-red-400">❌ غلط</label>
+                            <input type="number" id="examWrong" class="input-modern text-center font-bold text-lg" oninput="calculatePercent()" placeholder="0">
+                        </div>
+                        <div class="space-y-1 text-center">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400">⚪️ نزده</label>
+                            <input type="number" id="examEmpty" class="input-modern text-center font-bold text-lg" oninput="calculatePercent()" placeholder="0">
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-tgBlue/10 rounded-xl text-center border border-tgBlue/20 flex flex-col items-center">
+                        <span class="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-1">درصد شما (با احتساب نمره منفی):</span>
+                        <span id="examResultPercent" class="text-3xl font-black text-tgBlue" dir="ltr">% 0.0</span>
+                    </div>
+                </div>
+
+                <!-- بخش تشریحی -->
+                <div id="exam_desc_section" class="space-y-4 pt-3 border-t border-gray-100 dark:border-gray-700 hidden-tab">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold">درس امتحانی</label>
+                        <select id="examSubject" class="input-modern">
+                            <!-- جاوااسکریپت پر می‌کند -->
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold">فصل / مباحث امتحانی</label>
+                        <input type="text" id="examChapters" class="input-modern" placeholder="مثلاً: فصل 1 و 2">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold">نمره کسب شده (از 20)</label>
+                        <input type="number" step="0.25" id="examScore" class="input-modern text-lg font-bold text-center" placeholder="مثلاً: 18.5">
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <form id="form_message" class="tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft space-y-2">
+                <label class="block text-sm font-bold">متن پیام به مشاور</label>
+                <textarea id="studentMessage" rows="6" class="input-modern resize-none" placeholder="سوال، مشکل یا درخواست خود را اینجا بنویسید..."></textarea>
+            </div>
+        </form>
+
+        <div id="form_my_stats" class="tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-8 rounded-2xl shadow-soft text-center flex flex-col items-center">
+                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-tgBlue rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">دریافت کارنامه آماری</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">با تایید شما، کارنامه کلی ساعات مطالعه و تست‌های شما توسط ربات محاسبه و ارسال می‌شود.</p>
+            </div>
         </div>
 
-        <!-- 1. فرم گزارش کار دانش‌آموز -->
-        <form id="form_report" class="space-y-4 tab-content">
-            <div id="advisorTasksContainer" class="space-y-3 mb-6">
-                <!-- تسک‌ها اینجا اضافه میشن -->
-            </div>
-
-            <div id="studentSubjectsContainer" class="space-y-4 border-t-2 border-gray-200 pt-4">
-                <!-- فرم‌های درسی اضافه شده توسط دانش‌آموز -->
-            </div>
-
-            <button type="button" onclick="addStudentSubjectForm()" class="w-full py-2 border-2 border-dashed border-green-500 text-green-600 font-bold rounded-lg mt-2">
-                ➕ افزودن درس اضافی (خارج از برنامه)
-            </button>
-
-            <div class="space-y-1 mt-6">
-                <label class="block text-sm font-semibold">وضعیت انرژی امروز</label>
-                <select id="mood" class="input-field w-full p-2 rounded-lg">
-                    <option value="عالی">عالی</option>
-                    <option value="خوب" selected>خوب</option>
-                    <option value="متوسط">متوسط</option>
-                    <option value="خسته">خسته</option>
-                </select>
-            </div>
-        </form>
-
-        <!-- 2. فرم آزمون دانش‌آموز (هوشمند) -->
-        <form id="form_exam" class="space-y-4 tab-content hidden-tab">
-            <div class="space-y-1">
-                <label class="block text-sm font-semibold">نوع آزمون</label>
-                <select id="examType" class="input-field w-full p-2 rounded-lg" onchange="toggleExamType()">
-                    <option value="تستی">تستی (آزمون آزمایشی)</option>
-                    <option value="تشریحی">تشریحی (مدرسه / نهایی)</option>
-                </select>
-            </div>
-
-            <!-- بخش تستی -->
-            <div id="exam_test_section" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold">موسسه برگزارکننده</label>
-                    <select id="examInstitute" class="input-field w-full p-2 rounded-lg">
-                        <option value="قلم‌چی (کانون)">قلم‌چی (کانون)</option>
-                        <option value="گاج">گاج</option>
-                        <option value="ماز">ماز</option>
-                        <option value="سنجش">سنجش</option>
-                        <option value="خیلی سبز">خیلی سبز</option>
-                        <option value="گزینه دو">گزینه دو</option>
-                        <option value="مدارس برتر (نشانه)">مدارس برتر (نشانه)</option>
-                        <option value="سایر">سایر آزمون‌ها</option>
-                    </select>
+        <div id="form_sub_status" class="tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-8 rounded-2xl shadow-soft text-center flex flex-col items-center">
+                 <div class="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 text-orange-500 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
-                <div class="flex space-x-2 space-x-reverse">
-                    <div class="w-1/3 space-y-1">
-                        <label class="block text-xs font-semibold text-green-600">درست</label>
-                        <input type="number" id="examCorrect" class="input-field w-full p-2 rounded-lg text-center font-bold" oninput="calculatePercent()" placeholder="0">
-                    </div>
-                    <div class="w-1/3 space-y-1">
-                        <label class="block text-xs font-semibold text-red-600">غلط</label>
-                        <input type="number" id="examWrong" class="input-field w-full p-2 rounded-lg text-center font-bold" oninput="calculatePercent()" placeholder="0">
-                    </div>
-                    <div class="w-1/3 space-y-1">
-                        <label class="block text-xs font-semibold text-gray-500">نزده</label>
-                        <input type="number" id="examEmpty" class="input-field w-full p-2 rounded-lg text-center font-bold" oninput="calculatePercent()" placeholder="0">
-                    </div>
-                </div>
-                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center mt-2">
-                    <span class="text-sm font-bold text-gray-700">درصد شما با نمره منفی: </span>
-                    <span id="examResultPercent" class="text-lg font-bold text-blue-600" dir="ltr">% 0.0</span>
-                </div>
+                <h3 class="text-lg font-bold mb-2">استعلام قرارداد</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">تعداد روزهای باقی‌مانده از اشتراک مشاوره شما در چت ربات اعلام خواهد شد.</p>
             </div>
-
-            <!-- بخش تشریحی -->
-            <div id="exam_desc_section" class="space-y-4 hidden-tab">
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold">درس امتحانی</label>
-                    <select id="examSubject" class="input-field w-full p-2 rounded-lg">
-                        <!-- جاوااسکریپت پر می‌کند -->
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold">فصل / مباحث امتحانی</label>
-                    <input type="text" id="examChapters" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً: فصل 1 و 2">
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold">نمره کسب شده</label>
-                    <input type="number" step="0.25" id="examScore" class="input-field w-full p-2 rounded-lg" placeholder="مثلاً: 18.5">
-                </div>
-            </div>
-        </form>
-
-        <form id="form_message" class="space-y-4 tab-content hidden-tab">
-            <div class="space-y-1">
-                <label class="block text-sm font-semibold">متن پیام</label>
-                <textarea id="studentMessage" rows="5" class="input-field w-full p-2 rounded-lg resize-none" placeholder="سوال یا مشکل خود را مطرح کنید..."></textarea>
-            </div>
-        </form>
-
-        <div id="form_my_stats" class="tab-content hidden-tab text-center text-sm">برای دریافت کارنامه آماری تایید کنید.</div>
-        <div id="form_sub_status" class="tab-content hidden-tab text-center text-sm">برای بررسی وضعیت قرارداد تایید کنید.</div>
+        </div>
 
         <!-- 3. فرم ارسال برنامه مشاور -->
-        <form id="form_send_task" class="space-y-4 tab-content hidden-tab">
-            <div class="space-y-1 mb-4">
-                <label class="block text-sm font-semibold">انتخاب دانش‌آموز</label>
-                <select id="targetStudentId" class="input-field w-full p-2 rounded-lg" onchange="updateAdvisorCurriculum()">
-                    <!-- لیست دانش‌آموزان توسط ربات پر می‌شود -->
-                </select>
+        <form id="form_send_task" class="space-y-5 tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">انتخاب دانش‌آموز هدف</label>
+                    <select id="targetStudentId" class="input-modern" onchange="updateAdvisorCurriculum()">
+                        <!-- لیست دانش‌آموزان پر می‌شود -->
+                    </select>
+                </div>
+                
+                <div class="border-t border-gray-100 dark:border-gray-700 pt-4 mt-2">
+                    <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">برنامه درسی (تسک‌ها)</h3>
+                    <div id="advisorSubjectsContainer" class="space-y-4">
+                        <!-- فرم‌های درسی مشاور -->
+                    </div>
+
+                    <button type="button" onclick="addAdvisorSubjectForm()" class="w-full mt-4 py-3 bg-blue-50 dark:bg-tgBlue/10 text-tgBlue font-bold rounded-xl border border-blue-200 dark:border-tgBlue/20 hover:bg-blue-100 dark:hover:bg-tgBlue/20 transition-colors flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                        افزودن درس به برنامه
+                    </button>
+                </div>
             </div>
 
-            <div id="advisorSubjectsContainer" class="space-y-4">
-                <!-- فرم‌های درسی مشاور اینجا قرار می‌گیرند -->
-            </div>
-
-            <button type="button" onclick="addAdvisorSubjectForm()" class="w-full py-2 border-2 border-dashed border-green-500 text-green-600 font-bold rounded-lg mt-2">
-                ➕ افزودن درس به برنامه
-            </button>
-            
-            <div class="space-y-1 mt-4">
-                <label class="block text-sm font-semibold">توضیحات اضافه (اختیاری)</label>
-                <textarea id="taskNotes" rows="2" class="input-field w-full p-2 rounded-lg resize-none" placeholder="نکته‌ای اگر هست بنویسید..."></textarea>
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft space-y-2">
+                <label class="block text-sm font-bold">توضیحات تکمیلی و توصیه‌ها (اختیاری)</label>
+                <textarea id="taskNotes" rows="3" class="input-modern resize-none" placeholder="نکته‌ای اگر هست برای دانش‌آموز بنویسید..."></textarea>
             </div>
         </form>
 
-        <div id="form_advisor_data" class="tab-content hidden-tab text-center text-sm">
-            لیست دانش‌آموزان را مستقیماً در چت تلگرام دریافت خواهید کرد. تایید کنید.
+        <div id="form_advisor_data" class="tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-8 rounded-2xl shadow-soft text-center flex flex-col items-center">
+                 <div class="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">لیست و گزارشات</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">لیست کامل دانش‌آموزانتان به صورت دکمه‌های شیشه‌ای در تلگرام ارسال می‌شود تا بتوانید گزارشات هر کدام را بررسی کنید.</p>
+            </div>
         </div>
 
-        <form id="form_broadcast" class="space-y-4 tab-content hidden-tab">
-            <div class="space-y-1">
-                <label class="block text-sm font-semibold">پیام همگانی</label>
-                <textarea id="broadcastText" rows="5" class="input-field w-full p-2 rounded-lg resize-none" placeholder="ارسال برای تمامی دانش‌آموزان..."></textarea>
+        <form id="form_broadcast" class="tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft space-y-2">
+                <label class="block text-sm font-bold">متن پیام همگانی</label>
+                <textarea id="broadcastText" rows="6" class="input-modern resize-none" placeholder="این پیام برای تمام دانش‌آموزان شما فوروارد می‌شود..."></textarea>
             </div>
         </form>
 
-        <div id="form_leaderboard" class="tab-content hidden-tab text-center text-sm">برای مشاهده رتبه‌بندی هفته تایید کنید.</div>
+        <div id="form_leaderboard" class="tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-8 rounded-2xl shadow-soft text-center flex flex-col items-center">
+                 <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-500 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" /></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">رتبه‌بندی ۷ روز گذشته</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">۵ نفر برتر که بیشترین ساعت مطالعه را ثبت کرده‌اند، استخراج می‌شوند.</p>
+            </div>
+        </div>
 
-        <form id="form_finance" class="space-y-4 tab-content hidden-tab">
-            <div class="space-y-1">
-                <label class="block text-sm font-semibold">شناسه دانش‌آموز</label>
-                <input type="number" id="financeStudentId" class="input-field w-full p-2 rounded-lg" placeholder="کد عددی">
-                <p class="text-xs opacity-70 text-gray-600 mt-2">با تایید شما، ۳۰ روز به اشتراک اضافه می‌شود.</p>
+        <form id="form_finance" class="tab-content hidden-tab fade-in">
+            <div class="bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">شناسه دانش‌آموز</label>
+                    <input type="number" id="financeStudentId" class="input-modern text-center font-bold text-xl tracking-widest" placeholder="--- --- ---">
+                </div>
+                <div class="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-xl text-sm leading-relaxed">
+                    <strong>توجه:</strong> با تایید شما در این بخش، دقیقاً <strong>۳۰ روز</strong> به اعتبار قرارداد مشاوره این دانش‌آموز افزوده خواهد شد.
+                </div>
             </div>
         </form>
-    </div>
+    </main>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -216,32 +393,64 @@
         let advisorStudentsList = []; 
         let studentToDos = []; 
 
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('role') === 'advisor') {
-            currentRole = 'advisor';
-            if (urlParams.get('st_data')) {
-                const rawData = decodeURIComponent(urlParams.get('st_data')).split(',');
-                if (rawData[0] !== "") {
-                    advisorStudentsList = rawData.map(item => {
-                        const parts = item.split('|');
-                        return { id: parts[0], name: parts[1], field: parts[2] };
-                    });
-                }
+        // ----------------------------------------------------
+        // بخش تنظیمات تم (Dark Mode / Light Mode)
+        // ----------------------------------------------------
+        function initTheme() {
+            // چک کردن ذخیره قبلی
+            const savedTheme = localStorage.getItem('theme');
+            const systemDark = tg.colorScheme === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
             }
-        } else {
-            if (urlParams.get('field')) studentField = decodeURIComponent(urlParams.get('field'));
-            if (urlParams.get('todos')) {
-                const rawTodos = decodeURIComponent(urlParams.get('todos')).split(',');
-                if(rawTodos[0] !== "") {
-                    studentToDos = rawTodos.map(item => {
-                        const p = item.split('~');
-                        const data = p[1].split('|');
-                        return { id: p[0], subject: data[0], chapter: data[1], hours: data[2], tests: data[3], status: p[2] };
-                    });
-                }
+            updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            // سعی میکنیم رنگ هدر تلگرام رو هم ست کنیم (اگه تو مینی‌اپ پشتیبانی بشه)
+            if(isDark) {
+                tg.setHeaderColor('#2c2c2e');
+                tg.setBackgroundColor('#1c1c1d');
+            } else {
+                tg.setHeaderColor('#ffffff');
+                tg.setBackgroundColor('#f3f4f6');
             }
         }
 
+        function updateThemeIcon() {
+            // آیکون‌ها توسط CSS (hidden/block) خودکار تغییر میکنند
+        }
+
+        // ----------------------------------------------------
+        // بخش منوی کشویی (Sidebar)
+        // ----------------------------------------------------
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.classList.contains('translate-x-full')) {
+                // باز شدن
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                // بسته شدن
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300); // زمان ترانزیشن
+            }
+        }
+
+        // ----------------------------------------------------
+        // پایگاه داده دروس
+        // ----------------------------------------------------
         const curriculumData = {
             "تجربی": {
                 "زیست‌شناسی": ["فصل ۱", "فصل ۲", "فصل ۳", "فصل ۴", "فصل ۵", "مباحث ترکیبی", "سایر"],
@@ -267,13 +476,33 @@
             }
         };
 
+        // ----------------------------------------------------
+        // راه‌اندازی اولیه
+        // ----------------------------------------------------
         function initApp() {
-            if (currentRole === 'advisor') {
+            initTheme(); // اعمال تم در ابتدای کار
+
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('role') === 'advisor') {
+                currentRole = 'advisor';
                 document.getElementById('appTitle').innerText = "پنل مدیریت مشاور";
+                document.getElementById('studentInfoMenu').innerText = "👨‍🏫 دسترسی: مشاور";
                 currentTab = 'send_task';
+                
                 document.querySelectorAll('.student-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.remove('hidden-tab'));
                 
+                if (urlParams.get('st_data')) {
+                    const rawData = decodeURIComponent(urlParams.get('st_data')).split(',');
+                    if (rawData[0] !== "") {
+                        advisorStudentsList = rawData.map(item => {
+                            const parts = item.split('|');
+                            return { id: parts[0], name: parts[1], field: parts[2] };
+                        });
+                    }
+                }
+
                 const stSelect = document.getElementById('targetStudentId');
                 if (advisorStudentsList.length === 0) {
                     const opt = document.createElement('option');
@@ -291,18 +520,34 @@
                     addAdvisorSubjectForm();
                 }
             } else {
-                document.getElementById('appTitle').innerText = "پنل دانش‌آموز";
-                document.getElementById('studentInfo').innerText = `رشته تحصیلی: ${studentField}`;
+                document.getElementById('appTitle').innerText = "میز کار تحصیلی";
+                if (urlParams.get('field')) studentField = decodeURIComponent(urlParams.get('field'));
+                
+                document.getElementById('studentInfoMenu').innerText = `👨‍🎓 رشته: ${studentField}`;
+                
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
                 
+                if (urlParams.get('todos')) {
+                    const rawTodos = decodeURIComponent(urlParams.get('todos')).split(',');
+                    if(rawTodos[0] !== "") {
+                        studentToDos = rawTodos.map(item => {
+                            const p = item.split('~');
+                            const data = p[1].split('|');
+                            return { id: p[0], subject: data[0], chapter: data[1], hours: data[2], tests: data[3], status: p[2] };
+                        });
+                    }
+                }
+
                 document.getElementById('examSubject').innerHTML = getSubjectsOptionsHtml(studentField);
                 renderStudentToDos();
             }
             switchTab(currentTab);
         }
 
-        // توابع مربوط به آزمون
+        // ----------------------------------------------------
+        // توابع منطقی فرم‌ها
+        // ----------------------------------------------------
         function toggleExamType() {
             const type = document.getElementById('examType').value;
             if (type === 'تستی') {
@@ -324,8 +569,6 @@
                 document.getElementById('examResultPercent').innerText = "% 0.0";
                 return;
             }
-            
-            // فرمول درصدگیری با نمره منفی
             let percent = (((correct * 3) - wrong) / (total * 3)) * 100;
             document.getElementById('examResultPercent').innerText = "% " + percent.toFixed(1);
         }
@@ -335,107 +578,35 @@
             container.innerHTML = '';
             
             if (studentToDos.length > 0) {
-                const title = document.createElement('h3');
-                title.className = "text-sm font-bold text-blue-600 border-b pb-1";
-                title.innerText = "📋 برنامه‌های امروز از طرف مشاور:";
-                container.appendChild(title);
+                const wrapper = document.createElement('div');
+                wrapper.className = "bg-white dark:bg-tgCardBg p-5 rounded-2xl shadow-soft";
                 
+                const title = document.createElement('h3');
+                title.className = "text-sm font-bold text-tgBlue mb-4 flex items-center gap-2";
+                title.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg> برنامه‌های امروز از طرف مشاور:`;
+                wrapper.appendChild(title);
+                
+                const list = document.createElement('div');
+                list.className = "space-y-3";
+
                 studentToDos.forEach((todo) => {
                     const isChecked = todo.status === '1' ? 'checked' : '';
                     const div = document.createElement('div');
-                    div.className = "flex items-center p-3 bg-blue-50 rounded-lg border border-blue-100";
+                    // استایل کارت‌های To-Do
+                    div.className = "flex items-start p-3 bg-gray-50 dark:bg-tgInputDark rounded-xl border border-gray-100 dark:border-gray-700 hover:border-tgBlue/50 transition-colors";
                     div.innerHTML = `
-                        <input type="checkbox" id="todo_${todo.id}" class="w-5 h-5 text-blue-600 rounded mr-3" ${isChecked}>
-                        <div class="mr-3">
-                            <label for="todo_${todo.id}" class="font-bold text-sm block cursor-pointer">${todo.subject} (${todo.chapter})</label>
-                            <span class="text-xs text-gray-600">${todo.hours} ساعت مطالعه | ${todo.tests} تست</span>
+                        <input type="checkbox" id="todo_${todo.id}" class="custom-checkbox mt-0.5 ml-3 shrink-0" ${isChecked}>
+                        <div>
+                            <label for="todo_${todo.id}" class="font-bold text-sm block cursor-pointer select-none text-gray-800 dark:text-gray-100">${todo.subject} (${todo.chapter})</label>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">${todo.hours} ساعت مطالعه | ${todo.tests} تست</span>
                         </div>
                     `;
-                    container.appendChild(div);
+                    list.appendChild(div);
                 });
-            } else {
-                container.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">برنامه‌ای از سمت مشاور برای امروز تعیین نشده است.</p>';
+                
+                wrapper.appendChild(list);
+                container.appendChild(wrapper);
             }
-        }
-
-        function addStudentSubjectForm() {
-            const container = document.getElementById('studentSubjectsContainer');
-            const index = container.children.length;
-            
-            const div = document.createElement('div');
-            div.className = "p-3 bg-gray-50 rounded-lg border border-gray-200 relative";
-            
-            const subjSelectHtml = getSubjectsOptionsHtml(studentField);
-            
-            div.innerHTML = `
-                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 left-2 text-red-500 font-bold text-lg leading-none">&times;</button>
-                <div class="space-y-1 mb-2">
-                    <label class="block text-xs font-semibold">درس</label>
-                    <select class="st-subject-select input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(this, '${studentField}')">
-                        ${subjSelectHtml}
-                    </select>
-                </div>
-                <div class="space-y-1 mb-2">
-                    <label class="block text-xs font-semibold">مبحث</label>
-                    <select class="st-chapter-select input-field w-full p-2 rounded-lg text-sm"></select>
-                </div>
-                <div class="flex space-x-2 space-x-reverse">
-                    <div class="w-1/2 space-y-1">
-                        <label class="block text-xs font-semibold">ساعت</label>
-                        <input type="number" step="0.25" class="st-hours-input input-field w-full p-2 rounded-lg text-center text-sm">
-                    </div>
-                    <div class="w-1/2 space-y-1">
-                        <label class="block text-xs font-semibold">تست</label>
-                        <input type="number" class="st-tests-input input-field w-full p-2 rounded-lg text-center text-sm">
-                    </div>
-                </div>
-            `;
-            container.appendChild(div);
-            updateRowChapters(div.querySelector('.st-subject-select'), studentField);
-        }
-
-        function updateAdvisorCurriculum() {
-            document.getElementById('advisorSubjectsContainer').innerHTML = '';
-            addAdvisorSubjectForm();
-        }
-
-        function addAdvisorSubjectForm() {
-            const container = document.getElementById('advisorSubjectsContainer');
-            const stSelect = document.getElementById('targetStudentId');
-            if(!stSelect.options.length || !stSelect.value) return;
-            
-            const selectedOption = stSelect.options[stSelect.selectedIndex];
-            const field = selectedOption.dataset.field || "تجربی";
-            
-            const div = document.createElement('div');
-            div.className = "p-3 bg-blue-50 rounded-lg border border-blue-200 relative";
-            const subjSelectHtml = getSubjectsOptionsHtml(field);
-            
-            div.innerHTML = `
-                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 left-2 text-red-500 font-bold text-lg leading-none">&times;</button>
-                <div class="space-y-1 mb-2">
-                    <label class="block text-xs font-semibold">درس</label>
-                    <select class="adv-subject-select input-field w-full p-2 rounded-lg text-sm" onchange="updateRowChapters(this, '${field}')">
-                        ${subjSelectHtml}
-                    </select>
-                </div>
-                <div class="space-y-1 mb-2">
-                    <label class="block text-xs font-semibold">مبحث</label>
-                    <select class="adv-chapter-select input-field w-full p-2 rounded-lg text-sm"></select>
-                </div>
-                <div class="flex space-x-2 space-x-reverse">
-                    <div class="w-1/2 space-y-1">
-                        <label class="block text-xs font-semibold">ساعت تعیین شده</label>
-                        <input type="number" step="0.25" class="adv-hours-input input-field w-full p-2 rounded-lg text-center text-sm" value="1">
-                    </div>
-                    <div class="w-1/2 space-y-1">
-                        <label class="block text-xs font-semibold">تست تعیین شده</label>
-                        <input type="number" class="adv-tests-input input-field w-full p-2 rounded-lg text-center text-sm" value="20">
-                    </div>
-                </div>
-            `;
-            container.appendChild(div);
-            updateRowChapters(div.querySelector('.adv-subject-select'), field);
         }
 
         function getSubjectsOptionsHtml(field) {
@@ -452,7 +623,7 @@
             const subjects = curriculumData[field] || curriculumData["تجربی"];
             const chapters = subjects[subject] || ["سایر"];
             
-            const chapterSelect = selectElement.parentElement.parentElement.querySelector(selectElement.className.includes('adv') ? '.adv-chapter-select' : '.st-chapter-select');
+            const chapterSelect = selectElement.parentElement.parentElement.querySelector('.chapter-select');
             chapterSelect.innerHTML = '';
             
             chapters.forEach(chap => {
@@ -463,39 +634,149 @@
             });
         }
 
+        // فرم داینامیک دانش‌آموز
+        function addStudentSubjectForm() {
+            const container = document.getElementById('studentSubjectsContainer');
+            const div = document.createElement('div');
+            // استایل کارت درسی دستی
+            div.className = "p-4 bg-gray-50 dark:bg-tgInputDark rounded-xl border border-gray-200 dark:border-gray-700 relative fade-in";
+            
+            const subjSelectHtml = getSubjectsOptionsHtml(studentField);
+            
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 left-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded-md transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.158 0c-.366-.02-.732-.033-1.1-.05m-1.1-1.15c-.02-.32-.05-.639-.07-.95m-1.1-1.15h-3.8m0 0H9m-3.8 0H5m3.8 0a1.1 1.1 0 012.2 0" /></svg>
+                </button>
+                <div class="space-y-3 mt-1">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">درس</label>
+                        <select class="st-subject-select input-modern py-2 text-sm" onchange="updateRowChapters(this, '${studentField}')">${subjSelectHtml}</select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">مبحث</label>
+                        <select class="chapter-select input-modern py-2 text-sm st-chapter-select"></select>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1/2 space-y-1">
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">ساعت</label>
+                            <input type="number" step="0.25" class="st-hours-input input-modern py-2 text-center text-sm font-bold" placeholder="0">
+                        </div>
+                        <div class="w-1/2 space-y-1">
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">تست</label>
+                            <input type="number" class="st-tests-input input-modern py-2 text-center text-sm font-bold" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            updateRowChapters(div.querySelector('.st-subject-select'), studentField);
+        }
+
+        // فرم داینامیک مشاور
+        function updateAdvisorCurriculum() {
+            document.getElementById('advisorSubjectsContainer').innerHTML = '';
+            addAdvisorSubjectForm();
+        }
+
+        function addAdvisorSubjectForm() {
+            const container = document.getElementById('advisorSubjectsContainer');
+            const stSelect = document.getElementById('targetStudentId');
+            if(!stSelect.options.length || !stSelect.value) return;
+            
+            const field = stSelect.options[stSelect.selectedIndex].dataset.field || "تجربی";
+            
+            const div = document.createElement('div');
+            div.className = "p-4 bg-gray-50 dark:bg-tgInputDark rounded-xl border border-gray-200 dark:border-gray-700 relative fade-in";
+            const subjSelectHtml = getSubjectsOptionsHtml(field);
+            
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 left-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded-md transition-colors">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.158 0c-.366-.02-.732-.033-1.1-.05m-1.1-1.15c-.02-.32-.05-.639-.07-.95m-1.1-1.15h-3.8m0 0H9m-3.8 0H5m3.8 0a1.1 1.1 0 012.2 0" /></svg>
+                </button>
+                <div class="space-y-3 mt-1">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">درس</label>
+                        <select class="adv-subject-select input-modern py-2 text-sm" onchange="updateRowChapters(this, '${field}')">${subjSelectHtml}</select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">مبحث</label>
+                        <select class="chapter-select input-modern py-2 text-sm adv-chapter-select"></select>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1/2 space-y-1">
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">ساعت تعیین شده</label>
+                            <input type="number" step="0.25" class="adv-hours-input input-modern py-2 text-center text-sm font-bold" value="1">
+                        </div>
+                        <div class="w-1/2 space-y-1">
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">تست تعیین شده</label>
+                            <input type="number" class="adv-tests-input input-modern py-2 text-center text-sm font-bold" value="20">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            updateRowChapters(div.querySelector('.adv-subject-select'), field);
+        }
+
+        // ----------------------------------------------------
+        // سوییچ بین تب‌ها
+        // ----------------------------------------------------
         function switchTab(tabId) {
             currentTab = tabId;
+            
+            // مخفی کردن تمام تب‌ها
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-tab'));
+            // نمایش تب انتخاب شده
             document.getElementById('form_' + tabId).classList.remove('hidden-tab');
             
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            event && event.currentTarget ? event.currentTarget.classList.add('active') : 
-                document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            // استایل دکمه‌های منو
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('text-tgBlue', 'bg-blue-50', 'dark:bg-tgBlue/10', 'font-bold');
+                el.classList.add('text-gray-700', 'dark:text-gray-200');
+            });
+            
+            const activeBtn = document.querySelector(`button[onclick="switchTab('${tabId}')"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('text-tgBlue', 'bg-blue-50', 'dark:bg-tgBlue/10', 'font-bold');
+                activeBtn.classList.remove('text-gray-700', 'dark:text-gray-200');
+                
+                // تغییر تایتل هدر
+                document.getElementById('sectionTitle').innerText = activeBtn.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '').trim(); // حذف ایموجی
+            }
+
+            // اگر منو باز است، ببندش
+            if (!document.getElementById('sidebar').classList.contains('translate-x-full')) {
+                toggleSidebar();
+            }
 
             updateMainButton();
         }
 
         function updateMainButton() {
             tg.MainButton.show();
-            tg.MainButton.color = tg.themeParams.button_color || "#3b82f6";
+            // رنگ دکمه بر اساس تم تلگرام
+            tg.MainButton.color = tg.themeParams.button_color || "#3390ec";
             tg.MainButton.textColor = tg.themeParams.button_text_color || "#ffffff";
             tg.MainButton.enable();
 
             const titles = {
-                'report': "ثبت و ارسال گزارش کار",
-                'exam': "ثبت نتیجه آزمون",
-                'message': "ارسال پیام",
-                'my_stats': "مشاهده آمار",
-                'sub_status': "استعلام وضعیت قرارداد",
-                'send_task': "ثبت و ارسال برنامه",
-                'broadcast': "ارسال اطلاعیه",
-                'advisor_data': "لیست دانش‌آموزان",
-                'leaderboard': "مشاهده نفرات برتر",
-                'finance': "تایید تمدید اشتراک"
+                'report': "ثبت و ارسال گزارش‌کار 🚀",
+                'exam': "ذخیره نتیجه آزمون 🎯",
+                'message': "ارسال پیام ✉️",
+                'my_stats': "مشاهده آمار من 📊",
+                'sub_status': "استعلام وضعیت ⏳",
+                'send_task': "ثبت و ارسال برنامه 📋",
+                'broadcast': "ارسال اطلاعیه 📢",
+                'advisor_data': "دریافت لیست 👥",
+                'leaderboard': "مشاهده نفرات برتر 🏆",
+                'finance': "تایید تمدید اشتراک 💳"
             };
             tg.MainButton.setText(titles[currentTab]);
         }
 
+        // ----------------------------------------------------
+        // ارسال اطلاعات به ربات
+        // ----------------------------------------------------
         Telegram.WebApp.onEvent('mainButtonClicked', function() {
             let payload = { action: currentTab };
 
@@ -505,6 +786,7 @@
                 let totalTests = 0;
                 const reportDetails = [];
 
+                // پردازش To-Do ها
                 studentToDos.forEach(todo => {
                     const checkbox = document.getElementById(`todo_${todo.id}`);
                     const isDone = checkbox ? checkbox.checked : false;
@@ -515,16 +797,17 @@
                         totalTests += parseInt(todo.tests);
                         reportDetails.push({
                             subject: todo.subject, chapter: todo.chapter, 
-                            hours: todo.hours, tests: todo.tests, status: "✅ کامل انجام شد"
+                            hours: todo.hours, tests: todo.tests, status: "done"
                         });
                     } else {
                         reportDetails.push({
                             subject: todo.subject, chapter: todo.chapter, 
-                            hours: 0, tests: 0, status: "❌ انجام نشد"
+                            hours: 0, tests: 0, status: "missed"
                         });
                     }
                 });
 
+                // پردازش دستی ها
                 const manualForms = document.getElementById('studentSubjectsContainer').children;
                 for (let i = 0; i < manualForms.length; i++) {
                     const form = manualForms[i];
@@ -538,7 +821,7 @@
                         totalTests += t;
                         reportDetails.push({
                             subject: subj, chapter: chap, 
-                            hours: h, tests: t, status: "➕ ثبت دستی"
+                            hours: h, tests: t, status: "manual"
                         });
                     }
                 }
@@ -564,13 +847,11 @@
                     
                     if(!payload.correct) return tg.showAlert("تعداد پاسخ‌های درست را وارد کنید.");
                     
-                    // محاسبه مجدد درصد برای اطمینان
                     let c = parseInt(payload.correct) || 0;
                     let w = parseInt(payload.wrong) || 0;
                     let e = parseInt(payload.empty) || 0;
                     let total = c + w + e;
                     payload.percent = total > 0 ? (((c * 3) - w) / (total * 3)) * 100 : 0;
-                    
                 } else {
                     payload.subject = document.getElementById('examSubject').value;
                     payload.chapters = document.getElementById('examChapters').value;
