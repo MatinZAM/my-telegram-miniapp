@@ -36,7 +36,7 @@
         }
         .hidden-tab { display: none; }
         
-        /* استایل دکمه مجازی برای مرورگر */
+        /* استایل دکمه مجازی برای محیط مرورگر (خارج از تلگرام) */
         #fakeMainButton {
             position: fixed;
             bottom: 0;
@@ -179,15 +179,15 @@
         const tg = window.Telegram.WebApp;
         let isTgAvailable = false;
         
-        // سیستم تشخیص بسیار دقیق تلگرام موبایل/دسکتاپ
-        if (tg.initData !== "" || (tg.platform && tg.platform !== "unknown")) {
+        // سیستم تشخیص بسیار دقیق تلگرام (حل مشکل دسکتاپ و مرورگر)
+        if (tg.initData !== "" || (tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0)) {
             isTgAvailable = true;
             tg.expand();
+            tg.ready();
         } else {
-            // شبیه‌سازی برای مرورگر خارج از تلگرام
             console.log("Running outside Telegram. Mocking functionality...");
             document.getElementById('fakeMainButton').style.display = 'block';
-            tg.sendData = (data) => { alert("داده‌ها آماده ارسال به ربات هستند:\n\n" + data); };
+            tg.sendData = (data) => { alert("محیط مرورگر: داده‌ها آماده ارسال به ربات هستند:\n\n" + data); };
             tg.showAlert = (msg) => alert(msg);
             tg.MainButton = { 
                 show: () => { document.getElementById('fakeMainButton').style.display = 'block'; }, 
@@ -201,9 +201,10 @@
         let currentRole = 'student';
         let currentTab = 'report';
         let studentField = 'تجربی';
-        let advisorStudentsList = []; // برای ذخیره لیست دانش‌آموزان مشاور
-        let studentToDos = []; // برای ذخیره برنامه‌های تعیین شده برای دانش‌آموز
+        let advisorStudentsList = []; 
+        let studentToDos = []; 
 
+        // خواندن پارامترهای آدرس (URL) که ربات پایتون فرستاده است
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('role') === 'advisor') {
             currentRole = 'advisor';
@@ -260,7 +261,6 @@
                 document.querySelectorAll('.student-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.remove('hidden-tab'));
                 
-                // پر کردن لیست دانش‌آموزان
                 const stSelect = document.getElementById('targetStudentId');
                 advisorStudentsList.forEach(st => {
                     const opt = document.createElement('option');
@@ -277,7 +277,6 @@
                 document.querySelectorAll('.advisor-only').forEach(el => el.classList.add('hidden-tab'));
                 document.querySelectorAll('.student-only').forEach(el => el.classList.remove('hidden-tab'));
                 
-                // پر کردن چک‌باکس‌های برنامه‌های مشاور
                 renderStudentToDos();
             }
             switchTab(currentTab);
@@ -311,7 +310,6 @@
             }
         }
 
-        // توابع ایجاد فرم پویا برای دانش‌آموز (دستی)
         function addStudentSubjectForm() {
             const container = document.getElementById('studentSubjectsContainer');
             const index = container.children.length;
@@ -350,7 +348,6 @@
             updateRowChapters(div.querySelector('.st-subject-select'), field);
         }
 
-        // توابع ایجاد فرم پویا برای مشاور (ارسال برنامه)
         function updateAdvisorCurriculum() {
             document.getElementById('advisorSubjectsContainer').innerHTML = '';
             addAdvisorSubjectForm();
@@ -466,7 +463,6 @@
                 let totalTests = 0;
                 const reportDetails = [];
 
-                // بررسی تیک‌های مشاور
                 studentToDos.forEach(todo => {
                     const checkbox = document.getElementById(`todo_${todo.id}`);
                     const isDone = checkbox ? checkbox.checked : false;
@@ -487,7 +483,6 @@
                     }
                 });
 
-                // بررسی دروس ثبت شده دستی
                 const manualForms = document.getElementById('studentSubjectsContainer').children;
                 for (let i = 0; i < manualForms.length; i++) {
                     const form = manualForms[i];
@@ -562,8 +557,10 @@
             tg.sendData(JSON.stringify(payload));
         }
 
+        // اتصال رویداد کلیک دکمه اصلی تلگرام به تابع ما
         Telegram.WebApp.onEvent('mainButtonClicked', triggerMainButton);
 
+        // اجرای اولیه برنامه
         initApp();
     </script>
 </body>
